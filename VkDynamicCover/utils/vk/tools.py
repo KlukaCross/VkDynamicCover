@@ -36,14 +36,14 @@ def get_random_picture_url(vk_session: vk_api.VkApi, group_id: str, album_id: st
 
 def get_group_info(vk_session: vk_api.VkApi, group_id: int, fields=""):
     vk_meth = vk_session.get_api()
-    return vk_meth.groups.getById(group_id=group_id, fields=fields)[0]
+    return vk_meth.groups.getById(group_id=-group_id, fields=fields)[0]
 
 
 def get_group_statistics(vk_session: vk_api.VkApi, group_id: int, app_id: int,
                          timestamp_from: int = "", timestamp_to: int = "", interval: str = "day",
                          intervals_count: int = 1, extended: bool = False):
     vk_meth = vk_session.get_api()
-    req = vk_meth.stats.get(group_id=group_id, app_id=app_id,
+    req = vk_meth.stats.get(group_id=-group_id, app_id=app_id,
                             timestamp_from=timestamp_from, timestamp_to=timestamp_to,
                             interval=interval, intervals_count=intervals_count, extended=extended)
     return req
