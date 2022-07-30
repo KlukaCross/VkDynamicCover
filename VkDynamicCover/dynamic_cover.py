@@ -19,6 +19,7 @@ class DynamicCover:
         self.widget_program = self.config.get("widget_program", [])
         self.now_program = 0 if len(self.widget_program) > 0 else -1
 
+    @logger.catch(reraise=True)
     def update(self):
         for w in self.widget_sets.get("background", []):
             self.surface = w.draw(self.surface)
@@ -33,18 +34,16 @@ class DynamicCover:
         for w in self.widget_sets.get("frontground", []):
             self.surface = w.draw(self.surface)
 
-        try:
-            vk.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
-                                surface_width=self.surface.width, surface_height=self.surface.height,
-                                group_id=self.config["group_id"])
-            logger.info(f"Обложка успешно обновлена")
-        except Exception as e:
-            logger.error(f"Не удалось загрузить обложку - {e}")
+        vk.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
+                            surface_width=self.surface.width, surface_height=self.surface.height,
+                            group_id=self.config["group_id"])
+        logger.info(f"Обложка успешно обновлена")
 
         if self.now_program < 0:
             return
         self.now_program = self.now_program+1 if self.now_program < len(self.widget_program) else 0
 
+    @logger.catch(reraise=True)
     def get_widget_sets(self) -> dict:
         sets = self.config.get("widget_sets", {})
         for key, value in sets.items():
