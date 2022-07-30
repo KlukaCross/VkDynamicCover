@@ -69,11 +69,11 @@ class Subscriber(Widget):
             return int(fr.timestamp()), int(to.timestamp())
         if self.period == "month":
             fr = tmp.replace(day=1, hour=0, minute=0, second=0)
-            to = fr.replace(year=fr.year+1, month=1) if fr.month == 12 else fr.replace(month=fr.month+1)
+            to = fr.replace(year=fr.year + 1, month=1) if fr.month == 12 else fr.replace(month=fr.month + 1)
             return int(fr.timestamp()), int(to.timestamp())
         if self.period == "year":
             fr = tmp.replace(month=1, day=1, hour=0, minute=0, second=0)
-            to = fr.replace(year=fr.year+1)
+            to = fr.replace(year=fr.year + 1)
             return int(fr.timestamp()), int(to.timestamp())
 
     def init_rating(self):
@@ -168,25 +168,27 @@ class Subscriber(Widget):
         return post["date"] < self.rating_period[1]
 
 
-class MemberPlace(Text, Picture):
+class MemberPlace(Text):
     def __init__(self, **kwargs):
-        self.picture = kwargs.get("picture", {})
+        super().__init__(**kwargs)
+
         self.format = kwargs.get("format", "{first_name} {last_name}")
+
+        ava = kwargs.get("avatar", {})
+        kwargs.pop("xy", None)
+        self.avatar = Avatar(**ava, **kwargs)
 
         self.member_id = -1
         self.member_rating: dict = {}
 
-        Text.__init__(self, **kwargs)
-        Picture.__init__(self, **kwargs)
-
     def draw(self, surface):
-        surface = Text.draw(self, surface)
-        surface = Picture.draw(self, surface)
+        if self.member_id < 0:
+            return surface
+        surface = super().draw(surface)
+        surface = self.avatar.draw(surface)
         return surface
 
     def get_text(self) -> str:
-        if self.member_id < 0:
-            return ""
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id)
         return self.format.format(first_name=user["first_name"],
                                   last_name=user["last_name"],
@@ -195,9 +197,20 @@ class MemberPlace(Text, Picture):
                                   reposts=self.member_rating["reposts"],
                                   points=self.member_rating["points"])
 
+    def update_place(self, member_id, member_rating: dict):
+        self.member_id = member_id
+        self.member_rating = member_rating
+        self.avatar.member_id = member_id
+
+
+class Avatar(Picture):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.crop_type = kwargs.get("crop_type", "crop")
+        self.member_id = -1
+
     def get_image(self):
-        if self.member_id < 0:
-            return
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id, fields="crop_photo")
 
         sizes = user["crop_photo"]["photo"]["sizes"]
@@ -207,21 +220,16 @@ class MemberPlace(Text, Picture):
                 photo_max = i
 
         photo = draw.get_image_from_url(sizes[photo_max]["url"])
-        photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,
-                    photo.height * user["crop_photo"]["crop"]["y"] // 100,
-                    photo.width * user["crop_photo"]["crop"]["x2"] // 100,
-                    photo.height * user["crop_photo"]["crop"]["y2"] // 100))
+
+        if self.crop_type in ["crop", "small"]:
+            photo = photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,
+                                photo.height * user["crop_photo"]["crop"]["y"] // 100,
+                                photo.width * user["crop_photo"]["crop"]["x2"] // 100,
+                                photo.height * user["crop_photo"]["crop"]["y2"] // 100))
+            if self.crop_type == "small":
+                photo = photo.crop((photo.width * user["crop_photo"]["rect"]["x"] // 100,
+                                    photo.height * user["crop_photo"]["rect"]["y"] // 100,
+                                    photo.width * user["crop_photo"]["rect"]["x2"] // 100,
+                                    photo.height * user["crop_photo"]["rect"]["y2"] // 100))
 
         return photo
-
-    def get_resized_image(self, image):
-        if "resize" not in self.picture:
-            return image
-        return image.resize(self.picture["resize"])
-
-    def get_shift(self):
-        return self.picture.get("xy", (0, 0))
-
-    def update_place(self, member_id, member_rating: dict):
-        self.member_id = member_id
-        self.member_rating = member_rating
