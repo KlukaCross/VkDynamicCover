@@ -22,10 +22,5 @@ def get_widget(config: dict, **kwargs) -> widget.Widget:
     else:
         logger.warning(f"Неизвестное имя виджета - {name}")
         wid = Widget
-    try:
-        kwargs["config"] = config
-        return wid(**kwargs)
-    except Exception as e:
-        logger.error(f"Ошибка при создании виджета {name} - {e}")
-        return Widget()
-
+    kwargs["config"] = config
+    return wid(**kwargs)
