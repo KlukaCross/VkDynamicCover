@@ -9,4 +9,4 @@ class Widget:
         self.xy = kwargs.get("xy", (0, 0))
 
     def draw(self, surface: Image) -> Image:
-        pass
+        return surface

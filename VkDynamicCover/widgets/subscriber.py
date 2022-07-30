@@ -1,9 +1,10 @@
-import math
 import datetime
-import time
+from copy import copy
+from functools import reduce
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from vk_api.bot_longpoll import VkBotEventType
+from loguru import logger
 
 from .widget import Widget
 from .text import Text
@@ -16,21 +17,21 @@ MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0}
 
 class Subscriber(Widget):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs, **kwargs)
+        super().__init__(**kwargs)
 
         self.period = kwargs.get("period", "month")
-        self.start_period = self.get_start_period()
+        self.rating_period = self.get_rating_period()
 
         self.point_weights = kwargs.get("point_weights", {
             "likes": 0,
             "reposts": 0,
             "comments": 0
         })
-        self.like_places = [MemberPlace(vk_session=self.vk_session, **p) for p in kwargs.get("like_places", [])]
-        self.repost_places = [MemberPlace(vk_session=self.vk_session, **p) for p in kwargs.get("repost_places", [])]
-        self.comment_places = [MemberPlace(vk_session=self.vk_session, **p) for p in kwargs.get("comment_places", [])]
-        self.point_places = [MemberPlace(vk_session=self.vk_session, **p) for p in kwargs.get("point_places", [])]
-        self.lastSub_places = [MemberPlace(vk_session=self.vk_session, **p) for p in kwargs.get("lastSub_places", [])]
+        self.like_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("like_places", [])]
+        self.repost_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("repost_places", [])]
+        self.comment_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("comment_places", [])]
+        self.point_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("point_places", [])]
+        self.lastSub_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("lastSub_places", [])]
 
         self.rating = {}
 
@@ -39,6 +40,7 @@ class Subscriber(Widget):
         self.scheduler.add_job(
             func=vk.longpoll_listener,
             kwargs={
+                "vk_session": self.vk_session,
                 "group_id": self.config["group_id"],
                 "callback": self.longpoll_update}
         )
@@ -47,33 +49,39 @@ class Subscriber(Widget):
     def draw(self, surface):
         self.update_rating()
 
-        map(lambda x: x.draw(surface), self.like_places)
-        map(lambda x: x.draw(surface), self.repost_places)
-        map(lambda x: x.draw(surface), self.comment_places)
-        map(lambda x: x.draw(surface), self.point_places)
-        map(lambda x: x.draw(surface), self.lastSub_places)
+        surface = reduce(lambda x, y: y.draw(x), self.like_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.repost_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.comment_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.point_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.lastSub_places, surface)
 
         return surface
 
-    def get_start_period(self) -> int:
+    def get_rating_period(self) -> (int, int):
         tmp = datetime.datetime.now()
         if self.period == "day":
-            tmp = tmp.replace(hour=0, minute=0, second=0)
-            return math.trunc(datetime.timedelta(seconds=tmp.timestamp()).total_seconds())
+            fr = tmp.replace(hour=0, minute=0, second=0)
+            to = datetime.timedelta(days=1) + fr
+            return int(fr.timestamp()), int(to.timestamp())
         if self.period == "week":
-            tmp = tmp.replace(hour=0, minute=0, second=0)
-            return math.trunc(datetime.timedelta(days=tmp.toordinal() - tmp.weekday()).total_seconds())
+            fr = tmp.replace(hour=0, minute=0, second=0) - datetime.timedelta(days=tmp.weekday())
+            to = datetime.timedelta(days=7) + fr
+            return int(fr.timestamp()), int(to.timestamp())
         if self.period == "month":
-            tmp = tmp.replace(day=0, hour=0, minute=0, second=0)
-            return math.trunc(datetime.timedelta(seconds=tmp.timestamp()).total_seconds())
+            fr = tmp.replace(day=1, hour=0, minute=0, second=0)
+            to = fr.replace(year=fr.year+1, month=1) if fr.month == 12 else fr.replace(month=fr.month+1)
+            return int(fr.timestamp()), int(to.timestamp())
         if self.period == "year":
-            tmp = tmp.replace(month=0, day=0, hour=0, minute=0, second=0)
-            return math.trunc(datetime.timedelta(tmp.timestamp()).total_seconds())
+            fr = tmp.replace(month=1, day=1, hour=0, minute=0, second=0)
+            to = fr.replace(year=fr.year+1)
+            return int(fr.timestamp()), int(to.timestamp())
 
     def init_rating(self):
+        logger.info("Инициализируется рейтинг для виджета subscriber...")
         posts = vk.get_posts_from_date(vk_session=self.vk_session,
                                        group_id=self.config["group_id"],
-                                       from_date_unixtime=self.start_period)
+                                       from_date_unixtime=self.rating_period[0])
+
         for p in posts:
             likes = vk.get_post_liker_ids(vk_session=self.vk_session,
                                           group_id=self.config["group_id"],
@@ -89,63 +97,52 @@ class Subscriber(Widget):
                                           reposts_count=p["reposts"]["count"])
 
             for i in likes:
-                self.rating.setdefault(i, MEMBER_RATING)["likes"] += 1
+                self.rating.setdefault(i, copy(MEMBER_RATING))["likes"] += 1
 
             for i in comments:
-                self.rating.setdefault(i, MEMBER_RATING)["comments"] += 1
+                self.rating.setdefault(i["from_id"], copy(MEMBER_RATING))["comments"] += 1
 
             for i in reposts:
-                self.rating.setdefault(i, MEMBER_RATING)["reposts"] += 1
+                self.rating.setdefault(i["from_id"], copy(MEMBER_RATING))["reposts"] += 1
+        logger.info(f"Инициализация рейтинга завершена.")
 
     def update_rating(self):
         def upd(lst, key, func=None):
-            if len(lst) <= 0:
+            if len(lst) <= 0 or len(self.rating) <= 0:
                 return
             if not func:
                 func = lambda k: self.rating[k][key]
             top = list(self.rating.keys())
-            top.sort(key=func)
-            for i in range(len(lst)):
+            top.sort(key=func, reverse=True)
+            to = min(len(lst), len(top))
+            for i in range(to):
                 user_rating = self.rating[top[i]]
                 user_rating["points"] = self.calc_points(top[i])
                 lst[i].update_place(top[i], user_rating)
 
         if self.is_reset_rating():
+            logger.info("Сброс рейтинга")
             self.rating.clear()
             self.init_rating()
 
         upd(self.like_places, "likes")
         upd(self.repost_places, "reposts")
         upd(self.comment_places, "comments")
-        upd(self.point_places, "point", self.calc_points)
+        upd(self.point_places, "points", self.calc_points)
 
     def calc_points(self, user_id):
-        return self.rating[user_id]["likes"] * self.point_weights["likes"] + \
-               self.rating[user_id]["comments"] * self.point_weights["comments"] + \
-               self.rating[user_id]["reposts"] * self.point_weights["reposts"]
+        return self.rating[user_id]["likes"] * self.point_weights.get("likes", 0) + \
+               self.rating[user_id]["comments"] * self.point_weights.get("comments", 0) + \
+               self.rating[user_id]["reposts"] * self.point_weights.get("reposts", 0)
 
     def is_reset_rating(self) -> bool:
-        if self.period == "day":
-            return time.gmtime().tm_mday != time.gmtime(self.start_period).tm_mday
-        if self.period == "week":
-            return time.gmtime().tm_wday != time.gmtime(self.start_period).tm_wday
-        if self.period == "month":
-            return time.gmtime().tm_mon != time.gmtime(self.start_period).tm_mon
-        if self.period == "year":
-            return time.gmtime().tm_year != time.gmtime(self.start_period).tm_year
+        return datetime.datetime.now().timestamp() > self.rating_period[1]
 
     def longpoll_update(self, event):
-        if event.type in [
-            VkBotEventType.WALL_REPLY_NEW,
-            VkBotEventType.WALL_REPLY_DELETE,
-            VkBotEventType.WALL_REPLY_RESTORE
-        ]:
+        if event.type == VkBotEventType.WALL_REPLY_NEW:
             if not self.is_valid_post(event.object["post_id"]):
                 return
-            if event.type == VkBotEventType.WALL_REPLY_DELETE:
-                self.rating.setdefault(event.object["from_id"], MEMBER_RATING)["comments"] -= 1
-            else:
-                self.rating.setdefault(event.object["from_id"], MEMBER_RATING)["comments"] += 1
+            self.rating.setdefault(event.object["from_id"], MEMBER_RATING)["comments"] += 1
             return
 
         if event.type in [
@@ -168,7 +165,7 @@ class Subscriber(Widget):
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.config["group_id"], post_id=post_id)
-        return post["date example"] >= self.start_period
+        return post["date"] < self.rating_period[1]
 
 
 class MemberPlace(Text, Picture):
@@ -179,12 +176,13 @@ class MemberPlace(Text, Picture):
         self.member_id = -1
         self.member_rating: dict = {}
 
-        Text.__init__(**kwargs)
-        Picture.__init__(**kwargs)
+        Text.__init__(self, **kwargs)
+        Picture.__init__(self, **kwargs)
 
     def draw(self, surface):
-        Text.draw(self, surface)
-        Picture.draw(self, surface)
+        surface = Text.draw(self, surface)
+        surface = Picture.draw(self, surface)
+        return surface
 
     def get_text(self) -> str:
         if self.member_id < 0:
@@ -204,9 +202,9 @@ class MemberPlace(Text, Picture):
 
         sizes = user["crop_photo"]["photo"]["sizes"]
         photo_max = 0
-        for k, v in sizes.keys():
-            if v["width"] > sizes[photo_max]["width"]:
-                photo_max = k
+        for i in range(len(sizes)):
+            if sizes[i]["width"] > sizes[photo_max]["width"]:
+                photo_max = i
 
         photo = draw.get_image_from_url(sizes[photo_max]["url"])
         photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,

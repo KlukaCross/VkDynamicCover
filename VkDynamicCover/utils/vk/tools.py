@@ -4,6 +4,8 @@ from vk_api import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll
 import requests
 
+from loguru import logger
+
 
 def create_session(token) -> vk_api.VkApi:
     return vk_api.VkApi(token=token)
@@ -51,19 +53,19 @@ def get_group_statistics(vk_session: vk_api.VkApi, group_id: int, app_id: int,
 
 def get_post(vk_session: vk_api.VkApi, group_id: int, post_id: int):
     vk_meth = vk_session.get_api()
-    return vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])
+    return vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])[0]
 
 
 def get_posts_from_date(vk_session: vk_api.VkApi, group_id: int, from_date_unixtime: int):
     vk_meth = vk_session.get_api()
     req = vk_meth.wall.get(owner_id=group_id)
     count_posts = req["count"]
-    if req["items"][0]["is_pinned"] and req["items"][0]["date example"] >= from_date_unixtime:
+    if req["items"][0]["is_pinned"] and req["items"][0]["date"] >= from_date_unixtime:
         yield req["items"][0]
 
     for i in range(count_posts//100+1):
         req = vk_meth.wall.get(owner_id=group_id, count=100, offset=1+i*100)
-        if req["items"][-1]["date example"] < from_date_unixtime:
+        if req["items"][-1]["date"] < from_date_unixtime:
             break
         for p in req["items"]:
             yield p
@@ -71,7 +73,7 @@ def get_posts_from_date(vk_session: vk_api.VkApi, group_id: int, from_date_unixt
         return
 
     for post in req["items"]:
-        if post["date example"] >= from_date_unixtime:
+        if post["date"] >= from_date_unixtime:
             yield post
         else:
             return
@@ -81,8 +83,8 @@ def get_post_liker_ids(vk_session: vk_api.VkApi, group_id: int, post_id: int, li
     vk_meth = vk_session.get_api()
     for i in range(likes_count//1000+1):
         req = vk_meth.likes.getList(type="post", owner_id=group_id, item_id=post_id,
-                                    skip_own=True, count=1000, offset=i*1000)
-        for v in req:
+                                    count=1000, offset=i*1000)
+        for v in req["items"]:
             yield v
 
 
@@ -107,7 +109,13 @@ def get_user(vk_session: vk_api.VkApi, user_id: int, fields=""):
     return vk_meth.users.get(user_ids=user_id, fields=fields)[0]
 
 
-def longpoll_listener(vk_session: vk_api.VkApi, group_id, callback, kwargs: dict):
-    longpoll = VkBotLongPoll(vk_session, group_id=group_id)
+def get_comment(vk_session: vk_api.VkApi, group_id: int, comment_id: int):
+    vk_meth = vk_session.get_api()
+    return vk_meth.wall.getComment(owner_id=group_id, comment_id=comment_id)["items"][0]
+
+
+@logger.catch(reraise=True)
+def longpoll_listener(vk_session: vk_api.VkApi, group_id, callback, **kwargs: dict):
+    longpoll = VkBotLongPoll(vk_session, group_id=-group_id)
     for event in longpoll.listen():
         callback(event=event, **kwargs)
