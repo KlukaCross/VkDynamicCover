@@ -41,7 +41,7 @@ class DynamicCover:
 
         if self.now_program < 0:
             return
-        self.now_program = self.now_program+1 if self.now_program < len(self.widget_program) else 0
+        self.now_program = self.now_program+1 if self.now_program < len(self.widget_program)-1 else 0
 
     @logger.catch(reraise=True)
     def get_widget_sets(self) -> dict:
