@@ -18,17 +18,16 @@ class Statistics(Text):
         super().__init__(**kwargs)
         self.format = kwargs.get("format", "")
         self.interval = kwargs.get("interval", "day")
+        self.group_id = kwargs.get("group_id") or self.config["group_id"]
+        self.app_id = self.config.get("app_id")
+        if not self.app_id:
+            logger.error("В файле config отсутствует параметр app_id")
 
     def get_text(self) -> str:
-        group_id = self.config.get("group_id")
-        app_id = self.config.get("app_id")
-        if not app_id:
-            logger.error("В файле config отсутствует параметр app_id")
-            return ""
         info_res = vk.get_group_info(vk_session=self.vk_session,
-                                     group_id=group_id,
+                                     group_id=self.group_id,
                                      fields=",".join(SUPPORTED_INFO_STATS))
-        stat_res = vk.get_group_statistics(vk_session=self.vk_session, group_id=group_id, app_id=app_id,
+        stat_res = vk.get_group_statistics(vk_session=self.vk_session, group_id=self.group_id, app_id=self.app_id,
                                            interval=self.interval)[0]
         interval_stats = {**stat_res.get("activity", {}),
                           **stat_res.get("visitors", {}),

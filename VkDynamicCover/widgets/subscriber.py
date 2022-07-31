@@ -21,6 +21,7 @@ class Subscriber(Widget):
 
         self.period = kwargs.get("period", "month")
         self.rating_period = self.get_rating_period()
+        self.group_id = kwargs.get("group_id") or self.config["group_id"]
 
         self.point_weights = kwargs.get("point_weights", {
             "likes": 0,
@@ -41,7 +42,7 @@ class Subscriber(Widget):
             func=vk.longpoll_listener,
             kwargs={
                 "vk_session": self.vk_session,
-                "group_id": self.config["group_id"],
+                "group_id": self.group_id,
                 "callback": self.longpoll_update}
         )
         self.scheduler.start()
@@ -79,20 +80,20 @@ class Subscriber(Widget):
     def init_rating(self):
         logger.info("Инициализируется рейтинг для виджета subscriber...")
         posts = vk.get_posts_from_date(vk_session=self.vk_session,
-                                       group_id=self.config["group_id"],
+                                       group_id=self.group_id,
                                        from_date_unixtime=self.rating_period[0])
 
         for p in posts:
             likes = vk.get_post_liker_ids(vk_session=self.vk_session,
-                                          group_id=self.config["group_id"],
+                                          group_id=self.group_id,
                                           post_id=p["id"],
                                           likes_count=p["likes"]["count"])
             comments = vk.get_post_comments(vk_session=self.vk_session,
-                                            group_id=self.config["group_id"],
+                                            group_id=self.group_id,
                                             post_id=p["id"],
                                             comments_count=p["comments"]["count"])
             reposts = vk.get_post_reposts(vk_session=self.vk_session,
-                                          group_id=self.config["group_id"],
+                                          group_id=self.group_id,
                                           post_id=p["id"],
                                           reposts_count=p["reposts"]["count"])
 
@@ -147,7 +148,7 @@ class Subscriber(Widget):
             "like_add",
             "like_remove"
         ]:
-            if event.object["object_owner_id"] != self.config["group_id"] or \
+            if event.object["object_owner_id"] != self.group_id or \
                     not self.is_valid_post(event.object["object_id"]):
                 return
             if event.type == "like_add":
@@ -162,7 +163,7 @@ class Subscriber(Widget):
             self.rating.setdefault(event.object["owner_id"], MEMBER_RATING)["reposts"] -= 1
 
     def is_valid_post(self, post_id) -> bool:
-        post = vk.get_post(vk_session=self.vk_session, group_id=self.config["group_id"], post_id=post_id)
+        post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
         return post["date"] < self.rating_period[1]
 
 

@@ -10,8 +10,8 @@ from .picture import Picture
 class RandomPicture(Picture):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.group_id = kwargs.get("from_group_id", None)
-        self.album_id = kwargs.get("from_album_id", None)
+        self.group_id = kwargs.get("group_id") or self.config["group_id"]
+        self.album_id = kwargs.get("album_id")
 
     def get_image(self):
         if self.path:
