@@ -115,7 +115,7 @@ def get_comment(vk_session: vk_api.VkApi, group_id: int, comment_id: int):
 
 
 @logger.catch(reraise=True)
-def longpoll_listener(vk_session: vk_api.VkApi, group_id, callback, **kwargs: dict):
+def longpoll_listener(vk_session: vk_api.VkApi, group_id: int, callback, **kwargs: dict):
     longpoll = VkBotLongPoll(vk_session, group_id=-group_id)
     for event in longpoll.listen():
         callback(event=event, **kwargs)

@@ -62,19 +62,19 @@ class Subscriber(Widget):
         if self.period == "day":
             fr = tmp.replace(hour=0, minute=0, second=0)
             to = datetime.timedelta(days=1) + fr
-            return int(fr.timestamp()), int(to.timestamp())
-        if self.period == "week":
+        elif self.period == "week":
             fr = tmp.replace(hour=0, minute=0, second=0) - datetime.timedelta(days=tmp.weekday())
             to = datetime.timedelta(days=7) + fr
-            return int(fr.timestamp()), int(to.timestamp())
-        if self.period == "month":
+        elif self.period == "month":
             fr = tmp.replace(day=1, hour=0, minute=0, second=0)
             to = fr.replace(year=fr.year + 1, month=1) if fr.month == 12 else fr.replace(month=fr.month + 1)
-            return int(fr.timestamp()), int(to.timestamp())
-        if self.period == "year":
+        elif self.period == "year":
             fr = tmp.replace(month=1, day=1, hour=0, minute=0, second=0)
             to = fr.replace(year=fr.year + 1)
-            return int(fr.timestamp()), int(to.timestamp())
+        else:
+            logger.warning(f"Неизвестный период - {self.period}")
+            return [0, 0]
+        return int(fr.timestamp()), int(to.timestamp())
 
     def init_rating(self):
         logger.info("Инициализируется рейтинг для виджета subscriber...")
@@ -107,28 +107,26 @@ class Subscriber(Widget):
         logger.info(f"Инициализация рейтинга завершена.")
 
     def update_rating(self):
-        def upd(lst, key, func=None):
-            if len(lst) <= 0 or len(self.rating) <= 0:
+        def upd(places, func_key):
+            if len(places) <= 0 or len(self.rating) <= 0:
                 return
-            if not func:
-                func = lambda k: self.rating[k][key]
             top = list(self.rating.keys())
-            top.sort(key=func, reverse=True)
-            to = min(len(lst), len(top))
+            top.sort(key=func_key, reverse=True)
+            to = min(len(places), len(top))
             for i in range(to):
                 user_rating = self.rating[top[i]]
                 user_rating["points"] = self.calc_points(top[i])
-                lst[i].update_place(top[i], user_rating)
+                places[i].update_place(top[i], user_rating)
 
         if self.is_reset_rating():
             logger.info("Сброс рейтинга")
             self.rating.clear()
             self.init_rating()
 
-        upd(self.like_places, "likes")
-        upd(self.repost_places, "reposts")
-        upd(self.comment_places, "comments")
-        upd(self.point_places, "points", self.calc_points)
+        upd(self.like_places, lambda x: self.rating[x]["likes"])
+        upd(self.repost_places, lambda x: self.rating[x]["reposts"])
+        upd(self.comment_places, lambda x: self.rating[x]["comments"])
+        upd(self.point_places, self.calc_points)
 
     def calc_points(self, user_id):
         return self.rating[user_id]["likes"] * self.point_weights.get("likes", 0) + \

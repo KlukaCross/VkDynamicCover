@@ -8,24 +8,27 @@ COVER_HEIGHT = 530
 
 
 class DynamicCover:
+    @logger.catch(reraise=True)
     def __init__(self, config: dict):
         self.config = config
 
-        self.vk_session = vk.create_session(self.config["token"])
+        token = self.config["token"]
+        self.vk_session = vk.create_session(token)
+        self.group_id = self.config["group_id"]
         self.surface = draw.create_surface(COVER_WIDTH, COVER_HEIGHT)
 
         self.widget_sets = self.get_widget_sets()
 
-        self.widget_program = self.config.get("widget_program", [])
-        self.now_program = 0 if len(self.widget_program) > 0 else -1
+        self.widget_cycle = self.config.get("widget_cycle", [])
+        self.cur_widget_set = 0 if len(self.widget_cycle) > 0 else -1
 
     @logger.catch(reraise=True)
     def update(self):
         for w in self.widget_sets.get("background", []):
             self.surface = w.draw(self.surface)
 
-        if self.now_program >= 0:
-            set_name = self.widget_program[self.now_program]
+        if self.cur_widget_set >= 0:
+            set_name = self.widget_cycle[self.cur_widget_set]
             for w in self.widget_sets.get(set_name, []):
                 self.surface = w.draw(self.surface)
             if set_name not in self.widget_sets:
@@ -39,9 +42,9 @@ class DynamicCover:
                             group_id=self.config["group_id"])
         logger.info(f"Обложка успешно обновлена")
 
-        if self.now_program < 0:
+        if self.cur_widget_set < 0:
             return
-        self.now_program = self.now_program+1 if self.now_program < len(self.widget_program)-1 else 0
+        self.cur_widget_set = self.cur_widget_set + 1 if self.cur_widget_set < len(self.widget_cycle) - 1 else 0
 
     @logger.catch(reraise=True)
     def get_widget_sets(self) -> dict:
