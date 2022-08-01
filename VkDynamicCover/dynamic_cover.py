@@ -39,7 +39,7 @@ class DynamicCover:
 
         vk.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
                             surface_width=self.surface.width, surface_height=self.surface.height,
-                            group_id=self.config["group_id"])
+                            group_id=self.group_id)
         logger.info(f"Обложка успешно обновлена")
 
         if self.cur_widget_set < 0:

@@ -1,4 +1,4 @@
-from . import text, picture, date, random_picture, statistics, subscriber
+from . import text, picture, date, random_picture, statistics, subscriber, text_set
 from .widget import Widget
 
 from loguru import logger
@@ -7,17 +7,19 @@ from loguru import logger
 def get_widget(config: dict, **kwargs) -> widget.Widget:
     name = kwargs.get("name")
 
-    if name == "text":
+    if name == "Text":
         wid = text.Text
-    elif name == "picture":
+    elif name == "TextSet":
+        wid = text_set.TextSet
+    elif name == "Picture":
         wid = picture.Picture
-    elif name == "date":
+    elif name == "Date":
         wid = date.Date
-    elif name == "random_picture":
+    elif name == "RandomPicture":
         wid = random_picture.RandomPicture
-    elif name == "statistics":
+    elif name == "Statistics":
         wid = statistics.Statistics
-    elif name == "subscriber":
+    elif name == "Subscriber":
         wid = subscriber.Subscriber
     else:
         logger.warning(f"Неизвестное имя виджета - {name}")

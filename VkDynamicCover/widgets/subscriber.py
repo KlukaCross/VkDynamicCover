@@ -7,7 +7,7 @@ from vk_api.bot_longpoll import VkBotEventType
 from loguru import logger
 
 from .widget import Widget
-from .text import Text
+from .text_set import TextSet
 from .picture import Picture
 
 from ..utils import vk, draw
@@ -167,11 +167,9 @@ class Subscriber(Widget):
         return post["date"] < self.rating_period[1]
 
 
-class MemberPlace(Text):
+class MemberPlace(TextSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        self.format = kwargs.get("format", "{first_name} {last_name}")
 
         ava = kwargs.get("avatar", {})
         kwargs.pop("xy", None)
@@ -187,9 +185,9 @@ class MemberPlace(Text):
         surface = self.avatar.draw(surface)
         return surface
 
-    def get_text(self) -> str:
+    def get_format_text(self, text):
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id)
-        return self.format.format(first_name=user["first_name"],
+        return text.format(first_name=user["first_name"],
                                   last_name=user["last_name"],
                                   likes=self.member_rating["likes"],
                                   comments=self.member_rating["comments"],

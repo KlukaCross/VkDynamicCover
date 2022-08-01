@@ -1,7 +1,7 @@
 import datetime
 import math
 
-from .text import Text
+from .text_set import TextSet
 
 MONTHS_RUS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль",
               "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
@@ -12,11 +12,9 @@ MONTHS_RUS_R = ["января", "февраля", "марта", "апреля", 
 WEEKS_RUS = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"]
 
 
-class Date(Text):
+class Date(TextSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        self.format = kwargs.get("format", "{day} {month_rus} {year}")
 
         self.shift = kwargs.get("shift", {})
         self.shift.setdefault("year", 0)
@@ -27,7 +25,7 @@ class Date(Text):
         self.shift.setdefault("minute", 0)
         self.shift.setdefault("second", 0)
 
-    def get_text(self) -> str:
+    def get_format_text(self, text) -> str:
         t = datetime.datetime.now() + datetime.timedelta(weeks=self.shift["week"],
                                                          days=self.shift["day"],
                                                          hours=self.shift["hour"],
@@ -37,9 +35,14 @@ class Date(Text):
         t = t.replace(year=t.year + self.shift["year"] + math.trunc((t.month + self.shift["month"]) / 12),
                       month=(t.month + self.shift["month"]) % 12)
 
-        self.set_specification()
+        text = text \
+            .replace("{month}", "{month:0>2}") \
+            .replace("{day}", "{day:0>2}") \
+            .replace("{hour}", "{hour:0>2}") \
+            .replace("{minute}", "{minute:0>2}") \
+            .replace("{second}", "{second:0>2}")
 
-        return self.format.format(year=t.year,
+        return text.format(year=t.year,
                                   month=t.month,
                                   month_rus=MONTHS_RUS[t.month-1],
                                   month_rus_r=MONTHS_RUS_R[t.month-1],
@@ -50,10 +53,3 @@ class Date(Text):
                                   minute=t.minute,
                                   second=t.second)
 
-    def set_specification(self):
-        self.format = self.format\
-            .replace("{month}", "{month:0>2}")\
-            .replace("{day}", "{day:0>2}")\
-            .replace("{hour}", "{hour:0>2}")\
-            .replace("{minute}", "{minute:0>2}")\
-            .replace("{second}", "{second:0>2}")
