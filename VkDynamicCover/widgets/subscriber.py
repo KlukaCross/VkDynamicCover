@@ -222,6 +222,9 @@ class Avatar(Picture):
 
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id, fields="crop_photo")
 
+        if "crop_photo" not in user:
+            return self.default_picture.get_image()
+
         sizes = user["crop_photo"]["photo"]["sizes"]
         photo_max = 0
         for i in range(len(sizes)):
