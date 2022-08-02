@@ -173,9 +173,12 @@ class MemberPlace(TextSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        ava = kwargs.get("avatar", {})
-        kwargs.pop("xy", None)
-        self.avatar = Avatar(**ava, **kwargs)
+        ava = kwargs.get("avatar", None)
+        if ava:
+            kwargs.pop("xy", None)
+            self.avatar = Avatar(**ava, **kwargs)
+        else:
+            self.avatar = None
 
         default_kwargs = {**kwargs, "texts": kwargs.get("default_texts", []), "config": self.config}
         self.default_set = TextSet(**default_kwargs)
@@ -185,7 +188,8 @@ class MemberPlace(TextSet):
 
     def draw(self, surface):
         surface = self.default_set.draw(surface) if self.member_id < 0 else super().draw(surface)
-        surface = self.avatar.draw(surface)
+        if self.avatar:
+            surface = self.avatar.draw(surface)
         return surface
 
     def get_format_text(self, text):
@@ -202,7 +206,8 @@ class MemberPlace(TextSet):
     def update_place(self, member_id, member_rating: dict):
         self.member_id = member_id
         self.member_rating = member_rating
-        self.avatar.member_id = member_id
+        if self.avatar:
+            self.avatar.member_id = member_id
 
 
 class Avatar(Picture):
