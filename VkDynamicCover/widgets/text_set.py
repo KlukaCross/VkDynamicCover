@@ -4,12 +4,13 @@ from .text import Text
 
 class TextSet(Widget):
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self.texts = kwargs.get("texts", [])
         if isinstance(self.texts, dict):
             self.texts = [self.texts]
         for d in self.texts:
             d.setdefault("name", "text")
+            d["config"] = self.config
 
     def draw(self, surface):
         for d in self.texts:
