@@ -26,7 +26,7 @@ class Picture(Widget):
             p = Path(self.path)
             return draw.get_image_from_path(p)
         if self.url:
-            return draw.get_image_from_url(self.path)
+            return draw.get_image_from_url(self.url)
 
     def get_resized_image(self, image: Image):
         return draw.get_resized_image(image, self.resize) if self.resize else image

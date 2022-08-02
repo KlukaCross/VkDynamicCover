@@ -10,16 +10,20 @@ COVER_HEIGHT = 530
 class DynamicCover:
     @logger.catch(reraise=True)
     def __init__(self, config: dict):
-        self.config = config
 
-        token = self.config["token"]
+        token = config["token"]
         self.vk_session = vk.create_session(token)
-        self.group_id = self.config["group_id"]
+        self.group_id = config["group_id"]
         self.surface = draw.create_surface(COVER_WIDTH, COVER_HEIGHT)
 
-        self.widget_sets = self.get_widget_sets()
+        self.widget_sets = self.get_widget_sets(
+            widget_sets=config.get("widget_sets"),
+            main_font=config.get("main_font"),
+            group_id=self.group_id,
+            app_id=config.get("app_id")
+        )
 
-        self.widget_cycle = self.config.get("widget_cycle", [])
+        self.widget_cycle = config.get("widget_cycle", [])
         self.cur_widget_set = 0 if len(self.widget_cycle) > 0 else -1
 
     @logger.catch(reraise=True)
@@ -47,11 +51,10 @@ class DynamicCover:
         self.cur_widget_set = self.cur_widget_set + 1 if self.cur_widget_set < len(self.widget_cycle) - 1 else 0
 
     @logger.catch(reraise=True)
-    def get_widget_sets(self) -> dict:
-        sets = self.config.get("widget_sets", {})
-        for key, value in sets.items():
+    def get_widget_sets(self, widget_sets, **config) -> dict:
+        for key, value in widget_sets.items():
             if isinstance(value, dict):
-                sets[key] = [get_widget(config=self.config, vk_session=self.vk_session, **value)]
+                widget_sets[key] = [get_widget(config=config, vk_session=self.vk_session, **value)]
             else:
-                sets[key] = [get_widget(config=self.config, vk_session=self.vk_session, **wid) for wid in value]
-        return sets
+                widget_sets[key] = [get_widget(config=config, vk_session=self.vk_session, **wid) for wid in value]
+        return widget_sets

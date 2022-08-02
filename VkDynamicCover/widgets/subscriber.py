@@ -111,8 +111,10 @@ class Subscriber(Widget):
         def upd(places, func_key):
             if len(places) <= 0 or len(self.rating) <= 0:
                 return
-            top = list(self.rating.keys())
+
+            top = list(filter(lambda x: func_key(x) > 0, self.rating.keys()))
             top.sort(key=func_key, reverse=True)
+
             to = min(len(places), len(top))
             for i in range(to):
                 user_rating = self.rating[top[i]]
@@ -175,17 +177,20 @@ class MemberPlace(TextSet):
         kwargs.pop("xy", None)
         self.avatar = Avatar(**ava, **kwargs)
 
+        default_kwargs = {**kwargs, "texts": kwargs.get("default_texts", []), "config": self.config}
+        self.default_set = TextSet(**default_kwargs)
+
         self.member_id = -1
         self.member_rating: dict = {}
 
     def draw(self, surface):
-        if self.member_id < 0:
-            return surface
-        surface = super().draw(surface)
+        surface = self.default_set.draw(surface) if self.member_id < 0 else super().draw(surface)
         surface = self.avatar.draw(surface)
         return surface
 
     def get_format_text(self, text):
+        if self.member_id < 0:
+            return
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id)
         return text.format(first_name=user["first_name"],
                                   last_name=user["last_name"],
@@ -205,9 +210,16 @@ class Avatar(Picture):
         super().__init__(**kwargs)
 
         self.crop_type = kwargs.get("crop_type", "crop")
+
+        default_kwargs = {**kwargs, "path": kwargs.get("default_path"), "url": kwargs.get("default_url"), "config": self.config}
+        self.default_picture = Picture(**default_kwargs)
+
         self.member_id = -1
 
     def get_image(self):
+        if self.member_id < 0:
+            return self.default_picture.get_image()
+
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id, fields="crop_photo")
 
         sizes = user["crop_photo"]["photo"]["sizes"]
