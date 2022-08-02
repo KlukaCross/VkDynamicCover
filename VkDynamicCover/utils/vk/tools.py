@@ -24,7 +24,7 @@ def push_cover(vk_session: vk_api.VkApi, surface_bytes: bytes, surface_width, su
 def get_random_picture_url(vk_session: vk_api.VkApi, group_id: str, album_id: str) -> str:
     vk_meth = vk_session.get_api()
     count = vk_meth.photos.get(owner_id=group_id, album_id=album_id, count=1)["count"]
-    random_offset = random.randint(0, count)
+    random_offset = random.randint(0, count-1)
     random_req = vk_meth.photos.get(owner_id=group_id, album_id=album_id, offset=random_offset, count=1)["items"][0]
     photo_url = None
     max_width = 0
@@ -60,7 +60,7 @@ def get_posts_from_date(vk_session: vk_api.VkApi, group_id: int, from_date_unixt
     vk_meth = vk_session.get_api()
     req = vk_meth.wall.get(owner_id=group_id)
     count_posts = req["count"]
-    if req["items"][0]["is_pinned"] and req["items"][0]["date"] >= from_date_unixtime:
+    if req["items"][0].get("is_pinned") and req["items"][0]["date"] >= from_date_unixtime:
         yield req["items"][0]
 
     for i in range(count_posts//100+1):
