@@ -2,14 +2,7 @@ import datetime
 import math
 
 from .text_set import TextSet
-
-MONTHS_RUS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль",
-              "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
-
-MONTHS_RUS_R = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля",
-                "августа", "сентября", "октября", "ноября", "декабря"]
-
-WEEKS_RUS = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"]
+from ..utils import time
 
 
 class Date(TextSet):
@@ -26,30 +19,14 @@ class Date(TextSet):
         self.shift.setdefault("second", 0)
 
     def get_format_text(self, text) -> str:
-        t = datetime.datetime.now() + datetime.timedelta(weeks=self.shift["week"],
-                                                         days=self.shift["day"],
-                                                         hours=self.shift["hour"],
-                                                         minutes=self.shift["minute"],
-                                                         seconds=self.shift["second"])
+        t = datetime.datetime.now()
+        t += datetime.timedelta(weeks=self.shift["week"],
+                                   days=self.shift["day"],
+                                   hours=self.shift["hour"],
+                                   minutes=self.shift["minute"],
+                                   seconds=self.shift["second"])
 
         t = t.replace(year=t.year + self.shift["year"] + math.trunc((t.month + self.shift["month"]) / 12),
-                      month=(t.month + self.shift["month"]) % 12)
-
-        text = text \
-            .replace("{month}", "{month:0>2}") \
-            .replace("{day}", "{day:0>2}") \
-            .replace("{hour}", "{hour:0>2}") \
-            .replace("{minute}", "{minute:0>2}") \
-            .replace("{second}", "{second:0>2}")
-
-        return text.format(year=t.year,
-                                  month=t.month,
-                                  month_rus=MONTHS_RUS[t.month-1],
-                                  month_rus_r=MONTHS_RUS_R[t.month-1],
-                                  week=t.isoweekday(),
-                                  week_rus=WEEKS_RUS[t.weekday()],
-                                  day=t.day,
-                                  hour=t.hour,
-                                  minute=t.minute,
-                                  second=t.second)
+                            month=(t.month + self.shift["month"]) % 12)
+        return time.format_time(t, text)
 

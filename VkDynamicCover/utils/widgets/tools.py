@@ -1,6 +1,9 @@
+import profile
+
 from loguru import logger
 
 from VkDynamicCover.widgets import *
+from VkDynamicCover.utils.widgets import other
 
 
 def create_widget(*args, **kwargs):
@@ -20,7 +23,12 @@ def create_widget(*args, **kwargs):
         wid = statistics.Statistics
     elif name == "Subscriber":
         wid = subscriber.Subscriber
-
+    elif name == "PeriodInfo":
+        wid = other.PeriodInfo
+    elif name == "Profile":
+        wid = profile.Profile
+    elif name == "Avatar":
+        wid = other.Avatar
     else:
         logger.warning(f"Неизвестное имя виджета - {name}")
         wid = widget.Widget
@@ -34,7 +42,7 @@ def create_widget(*args, **kwargs):
         elif isinstance(args[0], str):
             kwargs["text"] = args[0]
 
-    elif name in ["TextSet", "Date"]:
+    elif name in ["TextSet", "Date", "PeriodInfo", "Statistics", "Profile"]:
         if isinstance(args[0], dict):
             if "text" in args[0]:
                 kwargs["texts"] = [args[0]]

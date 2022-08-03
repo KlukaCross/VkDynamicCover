@@ -1,8 +1,3 @@
-import random
-from pathlib import Path
-
-from loguru import logger
-
 from ..utils import draw, vk
 from .picture import Picture
 
@@ -10,7 +5,7 @@ from .picture import Picture
 class RandomPicture(Picture):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.group_id = kwargs.get("group_id") or self.config["group_id"]
+        self.group_id = kwargs.get("group_id") or self.group_id
         self.album_id = kwargs.get("album_id")
 
     def get_image(self):

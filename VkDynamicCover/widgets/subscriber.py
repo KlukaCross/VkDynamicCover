@@ -1,5 +1,4 @@
 import datetime
-from copy import copy
 from functools import reduce
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -7,10 +6,9 @@ from vk_api.bot_longpoll import VkBotEventType
 from loguru import logger
 
 from .widget import Widget
-from .text_set import TextSet
-from .picture import Picture
 
-from ..utils import vk, draw
+from ..utils import vk, draw, widgets
+from ..utils.widgets.other import MemberPlace
 
 MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0}
 
@@ -35,6 +33,12 @@ class Subscriber(Widget):
         self.lastSub_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("lastSub_places", [])]
 
         self.rating = {}
+
+        period_info = kwargs.get("period_info")
+        self.period_info = widgets.create_widget(period_info, name="PeriodInfo") if period_info else None
+        if period_info:
+            self.period_info.set_period(time_from=datetime.datetime.fromtimestamp(self.rating_period[0]),
+                                        time_to=datetime.datetime.fromtimestamp(self.rating_period[1]))
 
         self.init_rating()
         self.scheduler = BackgroundScheduler()
@@ -98,13 +102,13 @@ class Subscriber(Widget):
                                           reposts_count=p["reposts"]["count"])
 
             for i in likes:
-                self.rating.setdefault(i, copy(MEMBER_RATING))["likes"] += 1
+                self.rating.setdefault(i, MEMBER_RATING.copy())["likes"] += 1
 
             for i in comments:
-                self.rating.setdefault(i["from_id"], copy(MEMBER_RATING))["comments"] += 1
+                self.rating.setdefault(i["from_id"], MEMBER_RATING.copy())["comments"] += 1
 
             for i in reposts:
-                self.rating.setdefault(i["from_id"], copy(MEMBER_RATING))["reposts"] += 1
+                self.rating.setdefault(i["from_id"], MEMBER_RATING.copy())["reposts"] += 1
         logger.info(f"Инициализация рейтинга завершена.")
 
     def update_rating(self):
@@ -125,6 +129,9 @@ class Subscriber(Widget):
             logger.info("Сброс рейтинга")
             self.rating.clear()
             self.init_rating()
+            if self.period_info:
+                self.period_info.set_period(time_from=datetime.datetime.fromtimestamp(self.rating_period[0]),
+                                            time_to=datetime.datetime.fromtimestamp(self.rating_period[1]))
 
         upd(self.like_places, lambda x: self.rating[x]["likes"])
         upd(self.repost_places, lambda x: self.rating[x]["reposts"])
@@ -143,7 +150,7 @@ class Subscriber(Widget):
         if event.type == VkBotEventType.WALL_REPLY_NEW:
             if not self.is_valid_post(event.object["post_id"]):
                 return
-            self.rating.setdefault(event.object["from_id"], MEMBER_RATING)["comments"] += 1
+            self.rating.setdefault(event.object["from_id"], MEMBER_RATING.copy())["comments"] += 1
             return
 
         if event.type in [
@@ -154,101 +161,18 @@ class Subscriber(Widget):
                     not self.is_valid_post(event.object["object_id"]):
                 return
             if event.type == "like_add":
-                self.rating.setdefault(event.object["liker_id"], MEMBER_RATING)["likes"] += 1
+                self.rating.setdefault(event.object["liker_id"], MEMBER_RATING.copy())["likes"] += 1
             else:
-                self.rating.setdefault(event.object["liker_id"], MEMBER_RATING)["likes"] -= 1
+                self.rating.setdefault(event.object["liker_id"], MEMBER_RATING.copy())["likes"] -= 1
             return
 
         if event.type == VkBotEventType.WALL_REPOST:
             if not self.is_valid_post(event.object["id"]):
                 return
-            self.rating.setdefault(event.object["owner_id"], MEMBER_RATING)["reposts"] -= 1
+            self.rating.setdefault(event.object["owner_id"], MEMBER_RATING.copy())["reposts"] -= 1
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
         return post["date"] < self.rating_period[1]
 
 
-class MemberPlace(TextSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        ava = kwargs.get("avatar", None)
-        if ava:
-            kwargs.pop("xy", None)
-            self.avatar = Avatar(**ava, **kwargs)
-        else:
-            self.avatar = None
-
-        self.member_id = -1
-        self.member_rating: dict = {}
-
-    def draw(self, surface):
-        surface = super().draw(surface)
-        if self.avatar:
-            surface = self.avatar.draw(surface)
-        return surface
-
-    def get_format_text(self, text):
-        if self.member_id < 0:
-            return ""
-        user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id)
-        return text.format(first_name=user["first_name"],
-                           last_name=user["last_name"],
-                           likes=self.member_rating["likes"],
-                           comments=self.member_rating["comments"],
-                           reposts=self.member_rating["reposts"],
-                           points=self.member_rating["points"])
-
-    def update_place(self, member_id, member_rating: dict):
-        self.member_id = member_id
-        self.member_rating = member_rating
-        if self.avatar:
-            self.avatar.member_id = member_id
-
-
-class Avatar(Picture):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.crop_type = kwargs.get("crop_type", "crop")
-
-        default_kwargs = {**kwargs, "path": kwargs.get("default_path"), "url": kwargs.get("default_url")}
-        self.default_picture = Picture(**default_kwargs)
-
-        self.random_images_path = kwargs.get("random_images_path", None)
-
-        self.member_id = -1
-
-    def get_image(self):
-        if self.member_id < 0:
-            return self.default_picture.get_image()
-
-        if self.random_images_path:
-            return draw.get_random_image_from_dir(self.random_images_path)
-
-        user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id, fields="crop_photo")
-
-        if "crop_photo" not in user:
-            return self.default_picture.get_image()
-
-        sizes = user["crop_photo"]["photo"]["sizes"]
-        photo_max = 0
-        for i in range(len(sizes)):
-            if sizes[i]["width"] > sizes[photo_max]["width"]:
-                photo_max = i
-
-        photo = draw.get_image_from_url(sizes[photo_max]["url"])
-
-        if self.crop_type in ["crop", "small"]:
-            photo = photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,
-                                photo.height * user["crop_photo"]["crop"]["y"] // 100,
-                                photo.width * user["crop_photo"]["crop"]["x2"] // 100,
-                                photo.height * user["crop_photo"]["crop"]["y2"] // 100))
-            if self.crop_type == "small":
-                photo = photo.crop((photo.width * user["crop_photo"]["rect"]["x"] // 100,
-                                    photo.height * user["crop_photo"]["rect"]["y"] // 100,
-                                    photo.width * user["crop_photo"]["rect"]["x2"] // 100,
-                                    photo.height * user["crop_photo"]["rect"]["y2"] // 100))
-
-        return photo
