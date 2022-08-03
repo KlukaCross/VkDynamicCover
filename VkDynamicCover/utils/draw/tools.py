@@ -1,3 +1,5 @@
+import random
+
 from PIL import Image, ImageFont, ImageDraw
 import io
 from pathlib import Path
@@ -67,3 +69,12 @@ def get_resized_image(image: Image, resize: (int or str, int or str)) -> Image:
         return image.resize((int(image.width * k), resize[1]))
 
     return image.resize(resize)
+
+
+def get_random_image_from_dir(path: Path) -> Image:
+    if not path.is_dir():
+        logger.warning(f"{p} не является директорией")
+        return
+    lst = list(filter(lambda x: x.suffix in [".png", ".jpg", ".jpeg", ".gif"], p.glob("*.*")))
+    rand_pic_path = random.choice(lst)
+    return get_image_from_path(rand_pic_path)

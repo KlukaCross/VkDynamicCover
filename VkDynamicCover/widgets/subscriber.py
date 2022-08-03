@@ -219,11 +219,16 @@ class Avatar(Picture):
         default_kwargs = {**kwargs, "path": kwargs.get("default_path"), "url": kwargs.get("default_url"), "config": self.config}
         self.default_picture = Picture(**default_kwargs)
 
+        self.random_images_path = kwargs.get("random_images_path", None)
+
         self.member_id = -1
 
     def get_image(self):
         if self.member_id < 0:
             return self.default_picture.get_image()
+
+        if self.random_images_path:
+            return draw.get_random_image_from_dir(self.random_images_path)
 
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id, fields="crop_photo")
 
