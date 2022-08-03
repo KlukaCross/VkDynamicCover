@@ -10,7 +10,7 @@ from .widget import Widget
 from ..utils import vk, draw, widgets
 from ..utils.widgets.other import MemberPlace
 
-MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0}
+MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0}
 
 
 class Subscriber(Widget):
@@ -24,11 +24,13 @@ class Subscriber(Widget):
         self.point_weights = kwargs.get("point_weights", {
             "likes": 0,
             "reposts": 0,
-            "comments": 0
+            "comments": 0,
+            "posts": 0
         })
         self.like_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("like_places", [])]
         self.repost_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("repost_places", [])]
         self.comment_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("comment_places", [])]
+        self.post_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("post_places", [])]
         self.point_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("point_places", [])]
         self.lastSub_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("lastSub_places", [])]
 
@@ -59,6 +61,7 @@ class Subscriber(Widget):
         surface = reduce(lambda x, y: y.draw(x), self.comment_places, surface)
         surface = reduce(lambda x, y: y.draw(x), self.point_places, surface)
         surface = reduce(lambda x, y: y.draw(x), self.lastSub_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.post_places, surface)
 
         return surface
 
@@ -109,6 +112,10 @@ class Subscriber(Widget):
 
             for i in reposts:
                 self.rating.setdefault(i["from_id"], MEMBER_RATING.copy())["reposts"] += 1
+
+            if p["from_id"] > 0:
+                self.rating.setdefault(p["from_id", MEMBER_RATING.copy()])["posts"] += 1
+
         logger.info(f"Инициализация рейтинга завершена.")
 
     def update_rating(self):
@@ -136,12 +143,14 @@ class Subscriber(Widget):
         upd(self.like_places, lambda x: self.rating[x]["likes"])
         upd(self.repost_places, lambda x: self.rating[x]["reposts"])
         upd(self.comment_places, lambda x: self.rating[x]["comments"])
+        upd(self.repost_places, lambda x: self.rating[x]["posts"])
         upd(self.point_places, self.calc_points)
 
     def calc_points(self, user_id):
         return self.rating[user_id]["likes"] * self.point_weights.get("likes", 0) + \
                self.rating[user_id]["comments"] * self.point_weights.get("comments", 0) + \
-               self.rating[user_id]["reposts"] * self.point_weights.get("reposts", 0)
+               self.rating[user_id]["reposts"] * self.point_weights.get("reposts", 0) + \
+                self.rating[user_id]["posts"] * self.point_weights.get("posts", 0)
 
     def is_reset_rating(self) -> bool:
         return datetime.datetime.now().timestamp() > self.rating_period[1]
@@ -170,6 +179,11 @@ class Subscriber(Widget):
             if not self.is_valid_post(event.object["id"]):
                 return
             self.rating.setdefault(event.object["owner_id"], MEMBER_RATING.copy())["reposts"] -= 1
+
+        if event.type == VkBotEventType.WALL_POST_NEW:
+            if not self.is_valid_post(event.object["from_id"]) or event.object["from_id"] < 0:
+                return
+            self.rating.setdefault(event.object["from_id"], MEMBER_RATING.copy())["posts"] += 1
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
