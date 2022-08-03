@@ -21,10 +21,10 @@ def push_cover(vk_session: vk_api.VkApi, surface_bytes: bytes, surface_width, su
     vk_meth.photos.saveOwnerCoverPhoto(hash=pht["hash"], photo=pht["photo"])
 
 
-def get_random_image_url(vk_session: vk_api.VkApi, group_id: str, album_id: str) -> str:
+def get_random_image_url(vk_session: vk_api.VkApi, group_id: str, album_id: str, rand_func=lambda count: random.randint(0, count-1)) -> str:
     vk_meth = vk_session.get_api()
     count = vk_meth.photos.get(owner_id=group_id, album_id=album_id, count=1)["count"]
-    random_offset = random.randint(0, count-1)
+    random_offset = rand_func(count)
     random_req = vk_meth.photos.get(owner_id=group_id, album_id=album_id, offset=random_offset, count=1)["items"][0]
     photo_url = None
     max_width = 0

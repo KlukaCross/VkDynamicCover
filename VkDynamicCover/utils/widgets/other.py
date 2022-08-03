@@ -30,27 +30,34 @@ class MemberPlace(TextSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        ava = kwargs.get("avatar")
-        if ava:
+        self.avatar = kwargs.get("avatar")
+        if self.avatar:
             kwargs.pop("xy", None)
-            self.avatar = widgets.create_widget(**ava, **kwargs, name="Avatar")
-        else:
-            self.avatar = None
+            self.avatar = widgets.create_widget(self.avatar, **kwargs, name="Avatar")
 
         self.profile = widgets.create_widget(kwargs.get("profile", {}), name="Profile")
 
-        self.user_id = -1
+        self.random_avatar = kwargs.get("random_avatar", None)
+        if self.random_avatar:
+            self.random_avatar = widgets.create_widget(self.random_avatar, **kwargs,
+                                                       name="RandomPicture",
+                                                       random_function=lambda count: self.user_id % count)
+
+        self.user_id = None
         self.member_rating: dict = {}
 
     def draw(self, surface):
         surface = super().draw(surface)
         surface = self.profile.draw(surface)
+        if self.random_avatar:
+            surface = self.random_avatar.draw(surface)
+            return surface
         if self.avatar:
             surface = self.avatar.draw(surface)
         return surface
 
     def get_format_text(self, text):
-        if self.user_id < 0:
+        if not self.user_id:
             return ""
         user = vk.get_user(vk_session=self.vk_session, user_id=self.user_id)
         return text.format(first_name=user["first_name"],

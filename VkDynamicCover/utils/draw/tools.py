@@ -71,10 +71,12 @@ def get_resized_image(image: Image, resize: (int or str, int or str)) -> Image:
     return image.resize(resize)
 
 
-def get_random_image_from_dir(path: Path) -> Image:
+def get_random_image_from_dir(path: Path, rand_func=lambda count: random.randint(0, count - 1)) -> Image:
     if not path.is_dir():
-        logger.warning(f"{p} не является директорией")
+        logger.warning(f"{path} не является директорией")
         return
-    lst = list(filter(lambda x: x.suffix in [".png", ".jpg", ".jpeg", ".gif"], p.glob("*.*")))
-    rand_pic_path = random.choice(lst)
+    lst = list(filter(lambda x: x.suffix in [".png", ".jpg", ".jpeg", ".gif"], path.glob("*.*")))
+    rand_c = rand_func(len(lst))
+    rand_pic_path = lst[rand_c]
     return get_image_from_path(rand_pic_path)
+
