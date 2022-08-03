@@ -21,7 +21,7 @@ class Subscriber(Widget):
 
         self.period = kwargs.get("period", "month")
         self.rating_period = self.get_rating_period()
-        self.group_id = kwargs.get("group_id") or self.config["group_id"]
+        self.group_id = kwargs.get("group_id") or self.group_id
 
         self.point_weights = kwargs.get("point_weights", {
             "likes": 0,
@@ -180,28 +180,25 @@ class MemberPlace(TextSet):
         else:
             self.avatar = None
 
-        default_kwargs = {**kwargs, "texts": kwargs.get("default_texts", []), "config": self.config}
-        self.default_set = TextSet(**default_kwargs)
-
         self.member_id = -1
         self.member_rating: dict = {}
 
     def draw(self, surface):
-        surface = self.default_set.draw(surface) if self.member_id < 0 else super().draw(surface)
+        surface = super().draw(surface)
         if self.avatar:
             surface = self.avatar.draw(surface)
         return surface
 
     def get_format_text(self, text):
         if self.member_id < 0:
-            return
+            return ""
         user = vk.get_user(vk_session=self.vk_session, user_id=self.member_id)
         return text.format(first_name=user["first_name"],
-                                  last_name=user["last_name"],
-                                  likes=self.member_rating["likes"],
-                                  comments=self.member_rating["comments"],
-                                  reposts=self.member_rating["reposts"],
-                                  points=self.member_rating["points"])
+                           last_name=user["last_name"],
+                           likes=self.member_rating["likes"],
+                           comments=self.member_rating["comments"],
+                           reposts=self.member_rating["reposts"],
+                           points=self.member_rating["points"])
 
     def update_place(self, member_id, member_rating: dict):
         self.member_id = member_id
@@ -216,7 +213,7 @@ class Avatar(Picture):
 
         self.crop_type = kwargs.get("crop_type", "crop")
 
-        default_kwargs = {**kwargs, "path": kwargs.get("default_path"), "url": kwargs.get("default_url"), "config": self.config}
+        default_kwargs = {**kwargs, "path": kwargs.get("default_path"), "url": kwargs.get("default_url")}
         self.default_picture = Picture(**default_kwargs)
 
         self.random_images_path = kwargs.get("random_images_path", None)

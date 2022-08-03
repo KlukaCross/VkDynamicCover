@@ -1,10 +1,14 @@
+from functools import reduce
+
 from loguru import logger
 
-from .utils import vk, draw
-from .widgets import get_widget
+from .utils import vk, draw, widgets
 
 COVER_WIDTH = 1590
 COVER_HEIGHT = 530
+
+BACKGROUND = "background"
+FRONTGROUND = "frontground"
 
 
 class DynamicCover:
@@ -18,9 +22,9 @@ class DynamicCover:
 
         self.widget_sets = self.get_widget_sets(
             widget_sets=config.get("widget_sets"),
-            main_font=config.get("main_font"),
             group_id=self.group_id,
-            app_id=config.get("app_id")
+            app_id=config.get("app_id"),
+            vk_session=self.vk_session
         )
 
         self.widget_cycle = config.get("widget_cycle", [])
@@ -28,22 +32,20 @@ class DynamicCover:
 
     @logger.catch(reraise=True)
     def update(self):
-        for w in self.widget_sets.get("background", []):
-            self.surface = w.draw(self.surface)
+        self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(BACKGROUND, []), self.surface)
 
         if self.cur_widget_set >= 0:
             set_name = self.widget_cycle[self.cur_widget_set]
-            for w in self.widget_sets.get(set_name, []):
-                self.surface = w.draw(self.surface)
+            self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(set_name, []), self.surface)
+
             if set_name not in self.widget_sets:
                 logger.warning(f"Набор виджетов {set_name} не найден")
 
-        for w in self.widget_sets.get("frontground", []):
-            self.surface = w.draw(self.surface)
+        self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(FRONTGROUND, []), self.surface)
 
         vk.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
-                            surface_width=self.surface.width, surface_height=self.surface.height,
-                            group_id=self.group_id)
+                      surface_width=self.surface.width, surface_height=self.surface.height,
+                      group_id=self.group_id)
         logger.info(f"Обложка успешно обновлена")
 
         if self.cur_widget_set < 0:
@@ -54,7 +56,7 @@ class DynamicCover:
     def get_widget_sets(self, widget_sets, **config) -> dict:
         for key, value in widget_sets.items():
             if isinstance(value, dict):
-                widget_sets[key] = [get_widget(config=config, vk_session=self.vk_session, **value)]
+                widget_sets[key] = [widgets.create_widget(**config, **value)]
             else:
-                widget_sets[key] = [get_widget(config=config, vk_session=self.vk_session, **wid) for wid in value]
+                widget_sets[key] = [widgets.create_widget(**config, **wid) for wid in value]
         return widget_sets

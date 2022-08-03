@@ -5,12 +5,11 @@ from ..utils import draw
 class Text(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self.text = kwargs.get("text", "")
 
-        font = kwargs.get("font", {}) or {}
-        main_font = self.config.get("main_font", {}) or {}
-        self.font_name = font.get("name") or main_font.get("name")
-        self.font_size = font.get("size") or main_font.get("size")
+        self.font_name = kwargs.get("font", {}).get("name")
+        self.font_size = kwargs.get("font", {}).get("font")
 
         self.fill = kwargs.get("fill", None)
         self.anchor = kwargs.get("anchor", None)

@@ -17,8 +17,8 @@ class Statistics(TextSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.interval = kwargs.get("interval", "day")
-        self.group_id = kwargs.get("group_id") or self.config["group_id"]
-        self.app_id = self.config.get("app_id")
+        self.group_id = kwargs.get("group_id") or self.group_id
+
         if not self.app_id:
             logger.error("В файле config отсутствует параметр app_id")
 
