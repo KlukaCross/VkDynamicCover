@@ -34,6 +34,8 @@ class Subscriber(Widget):
         self.point_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("point_places", [])]
         self.lastSub_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("lastSub_places", [])]
 
+        self.ban_list = kwargs.get("ban_list", [])
+
         self.rating = {}
 
         period_info = kwargs.get("period_info")
@@ -105,16 +107,16 @@ class Subscriber(Widget):
                                           reposts_count=p["reposts"]["count"])
 
             for i in likes:
-                self.rating.setdefault(i, MEMBER_RATING.copy())["likes"] += 1
+                self.add_point(i, "likes", 1)
 
             for i in comments:
-                self.rating.setdefault(i["from_id"], MEMBER_RATING.copy())["comments"] += 1
+                self.add_point(i["from_id"], "comments", 1)
 
             for i in reposts:
-                self.rating.setdefault(i["from_id"], MEMBER_RATING.copy())["reposts"] += 1
+                self.add_point(i["from_id"], "reposts", 1)
 
             if p["from_id"] > 0:
-                self.rating.setdefault(p["from_id", MEMBER_RATING.copy()])["posts"] += 1
+                self.add_point(p["from_id"], "posts", 1)
 
         logger.info(f"Инициализация рейтинга завершена.")
 
@@ -150,7 +152,7 @@ class Subscriber(Widget):
         return self.rating[user_id]["likes"] * self.point_weights.get("likes", 0) + \
                self.rating[user_id]["comments"] * self.point_weights.get("comments", 0) + \
                self.rating[user_id]["reposts"] * self.point_weights.get("reposts", 0) + \
-                self.rating[user_id]["posts"] * self.point_weights.get("posts", 0)
+               self.rating[user_id]["posts"] * self.point_weights.get("posts", 0)
 
     def is_reset_rating(self) -> bool:
         return datetime.datetime.now().timestamp() > self.rating_period[1]
@@ -159,7 +161,7 @@ class Subscriber(Widget):
         if event.type == VkBotEventType.WALL_REPLY_NEW:
             if not self.is_valid_post(event.object["post_id"]):
                 return
-            self.rating.setdefault(event.object["from_id"], MEMBER_RATING.copy())["comments"] += 1
+            self.add_point(event.object["from_id"], "comments", 1)
             return
 
         if event.type in [
@@ -169,24 +171,25 @@ class Subscriber(Widget):
             if event.object["object_owner_id"] != self.group_id or \
                     not self.is_valid_post(event.object["object_id"]):
                 return
-            if event.type == "like_add":
-                self.rating.setdefault(event.object["liker_id"], MEMBER_RATING.copy())["likes"] += 1
-            else:
-                self.rating.setdefault(event.object["liker_id"], MEMBER_RATING.copy())["likes"] -= 1
+            point = 1 if event.type == "like_add" else -1
+            self.add_point(event.object["liker_id"], "likes", point)
             return
 
         if event.type == VkBotEventType.WALL_REPOST:
             if not self.is_valid_post(event.object["id"]):
                 return
-            self.rating.setdefault(event.object["owner_id"], MEMBER_RATING.copy())["reposts"] -= 1
+            self.add_point(event.object["owner_id"], "reposts", -1)
 
         if event.type == VkBotEventType.WALL_POST_NEW:
             if not self.is_valid_post(event.object["from_id"]) or event.object["from_id"] < 0:
                 return
-            self.rating.setdefault(event.object["from_id"], MEMBER_RATING.copy())["posts"] += 1
+            self.add_point(event.object["from_id"], "posts", 1)
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
         return post["date"] < self.rating_period[1]
 
-
+    def add_point(self, user_id, rating_type, count_points):
+        if user_id in self.ban_list:
+            return
+        self.rating.setdefault(user_id, MEMBER_RATING.copy())[rating_type] += count_points
