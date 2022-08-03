@@ -24,7 +24,8 @@ class DynamicCover:
             widget_sets=config.get("widget_sets"),
             group_id=self.group_id,
             app_id=config.get("app_id"),
-            vk_session=self.vk_session
+            vk_session=self.vk_session,
+            donate_key=config.get("donate_key")
         )
 
         self.widget_cycle = config.get("widget_cycle", [])

@@ -7,10 +7,10 @@ from loguru import logger
 
 from .widget import Widget
 
-from ..utils import vk, draw, widgets
+from ..utils import vk, draw, widgets, donates
 from ..utils.widgets.other import MemberPlace
 
-MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0}
+MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates": 0}
 
 
 class Subscriber(Widget):
@@ -33,8 +33,11 @@ class Subscriber(Widget):
         self.post_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("post_places", [])]
         self.point_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("point_places", [])]
         self.lastSub_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("lastSub_places", [])]
+        self.donate_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("donate_places", [])]
 
         self.ban_list = kwargs.get("ban_list", [])
+
+        self.check_donate_ids = []
 
         self.rating = {}
 
@@ -118,6 +121,9 @@ class Subscriber(Widget):
             if p["from_id"] > 0:
                 self.add_point(p["from_id"], "posts", 1)
 
+        if self.donate_places:
+            self.update_donates()
+
         logger.info(f"Инициализация рейтинга завершена.")
 
     def update_rating(self):
@@ -147,6 +153,9 @@ class Subscriber(Widget):
         upd(self.comment_places, lambda x: self.rating[x]["comments"])
         upd(self.repost_places, lambda x: self.rating[x]["posts"])
         upd(self.point_places, self.calc_points)
+
+        self.update_donates()
+        upd(self.repost_places, lambda x: self.rating[x]["donates"])
 
     def calc_points(self, user_id):
         return self.rating[user_id]["likes"] * self.point_weights.get("likes", 0) + \
@@ -189,7 +198,25 @@ class Subscriber(Widget):
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
         return post["date"] < self.rating_period[1]
 
-    def add_point(self, user_id, rating_type, count_points):
+    def add_point(self, user_id, rating_type, count_points) -> bool:
         if user_id in self.ban_list:
-            return
+            return False
         self.rating.setdefault(user_id, MEMBER_RATING.copy())[rating_type] += count_points
+        return True
+
+    def update_donates(self):
+        if not self.donate_key:
+            logger.warning("Отсутствует donate_key")
+            return
+
+        res = donates.get_donates(key=self.donate_key, count=50)
+
+        for d in res["donates"]:
+            if d["id"] in self.check_donate_ids:
+                continue
+            self.check_donate_ids.append(d["id"])
+
+            if d["anon"]:
+                continue
+            if d["ts"] < self.rating_period[1]:
+                self.add_point(d["uid"], "donates", d["sum"])

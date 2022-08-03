@@ -65,7 +65,8 @@ class MemberPlace(TextSet):
                            likes=self.member_rating["likes"],
                            comments=self.member_rating["comments"],
                            reposts=self.member_rating["reposts"],
-                           points=self.member_rating["points"])
+                           points=self.member_rating["points"],
+                           donates=self.member_rating["donates"])
 
     def update_place(self, member_id, member_rating: dict):
         self.user_id = member_id
