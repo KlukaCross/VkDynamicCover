@@ -1,12 +1,10 @@
-import profile
-
 from loguru import logger
 
 from VkDynamicCover.widgets import *
 from VkDynamicCover.utils.widgets import other
 
 
-def create_widget(*args, **kwargs):
+def create_widget(config, **kwargs):
     name = kwargs.get("name")
 
     if name == "Text":
@@ -33,25 +31,4 @@ def create_widget(*args, **kwargs):
         logger.warning(f"Неизвестное имя виджета - {name}")
         wid = widget.Widget
 
-    if not args:
-        return wid(**kwargs)
-
-    if name == "Text":
-        if isinstance(args[0], dict):
-            kwargs.update(args[0].items())
-        elif isinstance(args[0], str):
-            kwargs["text"] = args[0]
-
-    elif name in ["TextSet", "Date", "PeriodInfo", "Statistics", "Profile"]:
-        if isinstance(args[0], dict):
-            if "text" in args[0]:
-                kwargs["texts"] = [args[0]]
-            else:
-                kwargs.update(args[0].items())
-        else:
-            kwargs["texts"] = args
-    else:
-        if args and isinstance(args[0], dict):
-            kwargs.update(args[0].items())
-
-    return wid(**kwargs)
+    return wid(config, **kwargs)

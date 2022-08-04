@@ -14,8 +14,8 @@ MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates":
 
 
 class Subscriber(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
 
         self.period = kwargs.get("period", "month")
         self.rating_period = self.get_rating_period()
@@ -27,13 +27,13 @@ class Subscriber(Widget):
             "comments": 0,
             "posts": 0
         })
-        self.like_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("like_places", [])]
-        self.repost_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("repost_places", [])]
-        self.comment_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("comment_places", [])]
-        self.post_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("post_places", [])]
-        self.point_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("point_places", [])]
-        self.lastSub_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("lastSub_places", [])]
-        self.donate_places = [MemberPlace(**kwargs, **p) for p in kwargs.get("donate_places", [])]
+        self.like_places = [MemberPlace(config, **p) for p in kwargs.get("like_places", [])]
+        self.repost_places = [MemberPlace(config, **p) for p in kwargs.get("repost_places", [])]
+        self.comment_places = [MemberPlace(config, **p) for p in kwargs.get("comment_places", [])]
+        self.post_places = [MemberPlace(config, **p) for p in kwargs.get("post_places", [])]
+        self.point_places = [MemberPlace(config, **p) for p in kwargs.get("point_places", [])]
+        self.lastSub_places = [MemberPlace(config, **p) for p in kwargs.get("lastSub_places", [])]
+        self.donate_places = [MemberPlace(config, **p) for p in kwargs.get("donate_places", [])]
 
         self.ban_list = kwargs.get("ban_list", [])
 
@@ -42,8 +42,11 @@ class Subscriber(Widget):
         self.rating = {}
 
         period_info = kwargs.get("period_info")
-        self.period_info = widgets.create_widget(period_info, name="PeriodInfo") if period_info else None
+
+        self.period_info = None
         if period_info:
+            period_info["name"] = "PeriodInfo"
+            self.period_info = widgets.create_widget(config, **period_info)
             self.period_info.set_period(time_from=datetime.datetime.fromtimestamp(self.rating_period[0]),
                                         time_to=datetime.datetime.fromtimestamp(self.rating_period[1]))
 
@@ -118,8 +121,7 @@ class Subscriber(Widget):
             for i in reposts:
                 self.add_point(i["from_id"], "reposts", 1)
 
-            if p["from_id"] > 0:
-                self.add_point(p["from_id"], "posts", 1)
+            self.add_point(p["from_id"], "posts", 1)
 
         if self.donate_places:
             self.update_donates()
@@ -199,7 +201,7 @@ class Subscriber(Widget):
         return post["date"] < self.rating_period[1]
 
     def add_point(self, user_id, rating_type, count_points) -> bool:
-        if user_id in self.ban_list:
+        if user_id in self.ban_list or user_id < 0:
             return False
         self.rating.setdefault(user_id, MEMBER_RATING.copy())[rating_type] += count_points
         return True

@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 class Picture(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
         self.path = kwargs.get("path", None)
         self.url = kwargs.get("url", None)
         self.resize = kwargs.get("resize", None)

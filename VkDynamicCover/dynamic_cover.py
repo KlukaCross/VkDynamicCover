@@ -31,7 +31,7 @@ class DynamicCover:
         self.widget_cycle = config.get("widget_cycle", [])
         self.cur_widget_set = 0 if len(self.widget_cycle) > 0 else -1
 
-    @logger.catch(reraise=True)
+    @logger.catch(reraise=False)
     def update(self):
         self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(BACKGROUND, []), self.surface)
 
@@ -57,7 +57,7 @@ class DynamicCover:
     def get_widget_sets(self, widget_sets, **config) -> dict:
         for key, value in widget_sets.items():
             if isinstance(value, dict):
-                widget_sets[key] = [widgets.create_widget(**config, **value)]
+                widget_sets[key] = [widgets.create_widget(config, **value)]
             else:
-                widget_sets[key] = [widgets.create_widget(**config, **wid) for wid in value]
+                widget_sets[key] = [widgets.create_widget(config, **wid) for wid in value]
         return widget_sets

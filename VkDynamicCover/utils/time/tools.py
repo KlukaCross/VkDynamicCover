@@ -1,4 +1,5 @@
 import datetime
+import math
 
 MONTHS_RUS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль",
               "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
@@ -27,3 +28,15 @@ def format_time(time: datetime.datetime, text) -> str:
                        hour=time.hour,
                        minute=time.minute,
                        second=time.second)
+
+
+def shift_time(time: datetime.datetime, shift: dict) -> datetime:
+    time += datetime.timedelta(weeks=shift["week"],
+                               days=shift["day"],
+                               hours=shift["hour"],
+                               minutes=shift["minute"],
+                               seconds=shift["second"])
+
+    time = time.replace(year=time.year + shift["year"] + math.trunc((time.month + shift["month"]) / 12),
+                        month=(time.month + shift["month"]) % 12)
+    return time

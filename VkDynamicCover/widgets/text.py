@@ -3,13 +3,13 @@ from ..utils import draw
 
 
 class Text(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
 
         self.text = kwargs.get("text", "")
 
         self.font_name = kwargs.get("font", {}).get("name")
-        self.font_size = kwargs.get("font", {}).get("font")
+        self.font_size = kwargs.get("font", {}).get("size")
 
         self.fill = kwargs.get("fill", None)
         self.anchor = kwargs.get("anchor", None)
@@ -56,3 +56,4 @@ class Limit:
             res_text += line + "\n"
 
         return res_text[:-1]
+

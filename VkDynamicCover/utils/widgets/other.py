@@ -5,15 +5,24 @@ from .. import time, widgets
 from ...widgets.picture import Picture
 
 from .. import vk, draw
+from ...widgets.random_picture import RandomPicture
 
 
 class PeriodInfo(TextSet):
-    def __init__(self, **kwargs):
-        kwargs.update(kwargs.get("texts", {}))
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
 
         self.text_from = kwargs.get("date_from", "{day}.{month}.{year}")
         self.text_to = kwargs.get("date_to", "{day}.{month}.{year}")
+
+        self.shift = kwargs.get("shift", {})
+        self.shift.setdefault("year", 0)
+        self.shift.setdefault("month", 0)
+        self.shift.setdefault("week", 0)
+        self.shift.setdefault("day", 0)
+        self.shift.setdefault("hour", 0)
+        self.shift.setdefault("minute", 0)
+        self.shift.setdefault("second", 0)
 
         self.time_from = self.time_to = datetime.datetime.now()
 
@@ -22,26 +31,21 @@ class PeriodInfo(TextSet):
                            date_to=time.format_time(self.time_to, self.text_to))
 
     def set_period(self, time_from: datetime.datetime, time_to: datetime.datetime):
-        self.time_from = time_from
-        self.time_to = time_to
+        self.time_from = time.shift_time(time_from, self.shift)
+        self.time_to = time.shift_time(time_to, self.shift)
 
 
 class MemberPlace(TextSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
 
-        self.avatar = kwargs.get("avatar")
-        if self.avatar:
-            kwargs.pop("xy", None)
-            self.avatar = widgets.create_widget(self.avatar, **kwargs, name="Avatar")
+        profile = kwargs.get("profile")
+        profile["name"] = "Profile"
+        self.profile = widgets.create_widget(config, **profile)
 
-        self.profile = widgets.create_widget(kwargs.get("profile", {}), name="Profile")
-
-        self.random_avatar = kwargs.get("random_avatar", None)
-        if self.random_avatar:
-            self.random_avatar = widgets.create_widget(self.random_avatar, **kwargs,
-                                                       name="RandomPicture",
-                                                       random_function=lambda count: self.user_id % count)
+        random_avatar = kwargs.get("random_avatar", {})
+        random_avatar["name"] = "RandomPicture"
+        self.random_avatar = RandomAvatar(config, **random_avatar) if "random_avatar" in kwargs else None
 
         self.user_id = None
         self.member_rating: dict = {}
@@ -52,8 +56,6 @@ class MemberPlace(TextSet):
         if self.random_avatar:
             surface = self.random_avatar.draw(surface)
             return surface
-        if self.avatar:
-            surface = self.avatar.draw(surface)
         return surface
 
     def get_format_text(self, text):
@@ -71,22 +73,23 @@ class MemberPlace(TextSet):
     def update_place(self, member_id, member_rating: dict):
         self.user_id = member_id
         self.member_rating = member_rating
-        if self.avatar:
-            self.avatar.user_id = member_id
         self.profile.set_user_id(member_id)
+        if self.random_avatar:
+            self.random_avatar.set_user_id(member_id)
 
 
 class Avatar(Picture):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
 
         self.crop_type = kwargs.get("crop_type", "crop")
 
         self.user_id = kwargs.get("user_id")
 
-        self.default_picture = widgets.create_widget(path=kwargs.get("default_path"),
-                                                     url=kwargs.get("default_url"),
-                                                     name="Picture", **kwargs)
+        kwargs["name"] = "Picture"
+        kwargs["path"] = "default_path"
+        kwargs["url"] = "default_url"
+        self.default_picture = widgets.create_widget(**kwargs)
 
     def get_image(self):
         if not self.user_id:
@@ -117,3 +120,11 @@ class Avatar(Picture):
                                     photo.height * user["crop_photo"]["rect"]["y2"] // 100))
 
         return photo
+
+
+class RandomAvatar(RandomPicture):
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
+
+    def set_user_id(self, user_id):
+        self.random_function = lambda x: user_id % x

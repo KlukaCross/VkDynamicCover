@@ -4,13 +4,16 @@ from ..utils import widgets, vk
 
 
 class Profile(TextSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
 
-        self.avatar = widgets.create_widget(kwargs.get("avatar"), name="Picture") if "avatar" in kwargs else None
         self.crop_type = kwargs.get("crop_type", "crop")
 
         self.user_id = kwargs.get("user_id")
+
+        avatar = kwargs.get("avatar", {})
+        avatar["name"] = "Avatar"
+        self.avatar = widgets.create_widget(config, **kwargs) if "avatar" in kwargs else None
 
     def draw(self, surface):
         if not self.user_id:
@@ -23,7 +26,6 @@ class Profile(TextSet):
 
     def get_format_text(self, text) -> str:
         user = vk.get_user(vk_session=self.vk_session, user_id=self.user_id)
-
         return text.format(first_name=user["first_name"], last_name=user["last_name"])
 
     def set_user_id(self, user_id):

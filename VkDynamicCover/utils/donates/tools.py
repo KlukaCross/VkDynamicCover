@@ -8,4 +8,4 @@ def get_donates(key, **kwargs):
     params.update(**kwargs)
     res = requests.post(url=URL, params=params)
 
-    return res
+    return res.json()

@@ -33,7 +33,7 @@ def draw_text(surface: Image,
     else:
         try:
             font = ImageFont.truetype(font=font_name, size=font_size, encoding='UTF-8')
-        except OSError as e:
+        except Exception as e:
             logger.warning(f"Не удалось загрузить шрифт - {e}")
             font = ImageFont.load_default()
 
