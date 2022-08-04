@@ -10,7 +10,7 @@ from .widget import Widget
 from ..utils import vk, draw, widgets, donates
 from ..utils.widgets.other import MemberPlace
 
-MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates": 0}
+MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates": 0, "points": 0}
 
 
 class Subscriber(Widget):
@@ -70,6 +70,10 @@ class Subscriber(Widget):
         surface = reduce(lambda x, y: y.draw(x), self.point_places, surface)
         surface = reduce(lambda x, y: y.draw(x), self.lastSub_places, surface)
         surface = reduce(lambda x, y: y.draw(x), self.post_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.donate_places, surface)
+
+        if self.period_info:
+            surface = self.period_info.draw(surface)
 
         return surface
 
@@ -121,10 +125,13 @@ class Subscriber(Widget):
             for i in reposts:
                 self.add_point(i["from_id"], "reposts", 1)
 
-            self.add_point(p["from_id"], "posts", 1)
+            self.add_point(p.get("signer_id", -1), "posts", 1)
 
         if self.donate_places:
             self.update_donates()
+
+        if self.lastSub_places:
+            self.update_last_subs()
 
         logger.info(f"Инициализация рейтинга завершена.")
 
@@ -153,11 +160,11 @@ class Subscriber(Widget):
         upd(self.like_places, lambda x: self.rating[x]["likes"])
         upd(self.repost_places, lambda x: self.rating[x]["reposts"])
         upd(self.comment_places, lambda x: self.rating[x]["comments"])
-        upd(self.repost_places, lambda x: self.rating[x]["posts"])
+        upd(self.post_places, lambda x: self.rating[x]["posts"])
         upd(self.point_places, self.calc_points)
 
         self.update_donates()
-        upd(self.repost_places, lambda x: self.rating[x]["donates"])
+        upd(self.donate_places, lambda x: self.rating[x]["donates"])
 
     def calc_points(self, user_id):
         return self.rating[user_id]["likes"] * self.point_weights.get("likes", 0) + \
@@ -194,11 +201,14 @@ class Subscriber(Widget):
         if event.type == VkBotEventType.WALL_POST_NEW:
             if not self.is_valid_post(event.object["from_id"]) or event.object["from_id"] < 0:
                 return
-            self.add_point(event.object["from_id"], "posts", 1)
+            self.add_point(event.object.get("signer_id", -1), "posts", 1)
+
+        if event.type == VkBotEventType.GROUP_JOIN:
+            self.update_last_subs()
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
-        return post["date"] < self.rating_period[1]
+        return post["date"] >= self.rating_period[0]
 
     def add_point(self, user_id, rating_type, count_points) -> bool:
         if user_id in self.ban_list or user_id < 0:
@@ -213,6 +223,9 @@ class Subscriber(Widget):
 
         res = donates.get_donates(key=self.donate_key, count=50)
 
+        if not res["success"]:
+            return
+
         for d in res["donates"]:
             if d["id"] in self.check_donate_ids:
                 continue
@@ -220,5 +233,15 @@ class Subscriber(Widget):
 
             if d["anon"]:
                 continue
-            if d["ts"] < self.rating_period[1]:
+            if d["ts"] > self.rating_period[0]:
                 self.add_point(d["uid"], "donates", d["sum"])
+
+    def update_last_subs(self):
+        member_ids = vk.get_group_member_ids(vk_session=self.vk_session,
+                                             group_id=self.group_id,
+                                             sort="time_desc",
+                                             count=len(self.lastSub_places))
+        for i in range(len(member_ids)):
+            self.lastSub_places[i].update_place(member_id=member_ids[i],
+                                                member_rating=self.rating.setdefault(member_ids[i],
+                                                                                     MEMBER_RATING.copy()))
