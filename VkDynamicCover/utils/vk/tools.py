@@ -114,6 +114,11 @@ def get_comment(vk_session: vk_api.VkApi, group_id: int, comment_id: int):
     return vk_meth.wall.getComment(owner_id=group_id, comment_id=comment_id)["items"][0]
 
 
+def get_group_member_ids(vk_session: vk_api.VkApi, group_id: int, sort, count=10):
+    vk_meth = vk_session.get_api()
+    return vk_meth.groups.getMembers(group_id=-group_id, sort=sort, count=count)["items"]
+
+
 @logger.catch(reraise=True)
 def longpoll_listener(vk_session: vk_api.VkApi, group_id: int, callback, **kwargs: dict):
     longpoll = VkBotLongPoll(vk_session, group_id=-group_id)
