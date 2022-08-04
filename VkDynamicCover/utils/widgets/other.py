@@ -47,11 +47,18 @@ class MemberPlace(TextSet):
         random_avatar["name"] = "RandomPicture"
         self.random_avatar = RandomAvatar(config, **random_avatar) if "random_avatar" in kwargs else None
 
+        default_image = kwargs.get("default_image", {})
+        default_image["name"] = "Picture"
+        self.default_image = widgets.create_widget(config, **default_image)
+
         self.user_id = None
         self.member_rating: dict = {}
 
     def draw(self, surface):
         surface = super().draw(surface)
+        if not self.user_id:
+            surface = self.default_image.draw(surface)
+            return surface
         surface = self.profile.draw(surface)
         if self.random_avatar:
             surface = self.random_avatar.draw(surface)
@@ -86,10 +93,8 @@ class Avatar(Picture):
 
         self.user_id = kwargs.get("user_id")
 
-        kwargs["name"] = "Picture"
-        kwargs["path"] = "default_path"
-        kwargs["url"] = "default_url"
-        self.default_picture = widgets.create_widget(**kwargs)
+        def_pic = {"name": "Picture", "path": kwargs.get("default_path"), "url": kwargs.get("default_url")}
+        self.default_picture = widgets.create_widget(config, **def_pic)
 
     def get_image(self):
         if not self.user_id:

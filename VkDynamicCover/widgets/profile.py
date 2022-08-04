@@ -13,7 +13,7 @@ class Profile(TextSet):
 
         avatar = kwargs.get("avatar", {})
         avatar["name"] = "Avatar"
-        self.avatar = widgets.create_widget(config, **kwargs) if "avatar" in kwargs else None
+        self.avatar = widgets.create_widget(config, **avatar) if "avatar" in kwargs else None
 
     def draw(self, surface):
         if not self.user_id:
