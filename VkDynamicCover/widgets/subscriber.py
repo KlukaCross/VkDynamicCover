@@ -140,13 +140,12 @@ class Subscriber(Widget):
             if len(places) <= 0 or len(self.rating) <= 0:
                 return
 
-            top = list(filter(lambda x: func_key(x) > 0, self.rating.keys()))
+            top = list(filter(lambda x: func_key(x) > 0, sorting_keys))
             top.sort(key=func_key, reverse=True)
 
             to = min(len(places), len(top))
             for i in range(to):
                 user_rating = self.rating[top[i]]
-                user_rating["points"] = self.calc_points(top[i])
                 places[i].update_place(top[i], user_rating)
 
         if self.is_reset_rating():
@@ -156,6 +155,9 @@ class Subscriber(Widget):
             if self.period_info:
                 self.period_info.set_period(time_from=datetime.datetime.fromtimestamp(self.rating_period[0]),
                                             time_to=datetime.datetime.fromtimestamp(self.rating_period[1]))
+
+        sorting_keys = list(self.rating.keys())
+        sorting_keys.sort(key=lambda x: self.rating[x]["points"], reverse=True)
 
         upd(self.like_places, lambda x: self.rating[x]["likes"])
         upd(self.repost_places, lambda x: self.rating[x]["reposts"])
@@ -214,6 +216,7 @@ class Subscriber(Widget):
         if user_id in self.ban_list or user_id < 0:
             return False
         self.rating.setdefault(user_id, MEMBER_RATING.copy())[rating_type] += count_points
+        self.rating[user_id]["points"] = self.calc_points(user_id)
         return True
 
     def update_donates(self):
