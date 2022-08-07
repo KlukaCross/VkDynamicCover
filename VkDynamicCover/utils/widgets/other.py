@@ -12,8 +12,8 @@ class PeriodInfo(TextSet):
     def __init__(self, config, **kwargs):
         super().__init__(config, **kwargs)
 
-        self.text_from = kwargs.get("date_from", "{day}.{month}.{year}")
-        self.text_to = kwargs.get("date_to", "{day}.{month}.{year}")
+        self.text_from = kwargs.get("date_from", "{day_z}.{month_z}.{year}")
+        self.text_to = kwargs.get("date_to", "{day_z}.{month_z}.{year}")
 
         self.shift = kwargs.get("shift", {})
         self.shift.setdefault("year", 0)

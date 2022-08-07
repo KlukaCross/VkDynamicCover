@@ -12,11 +12,11 @@ WEEKS_RUS = ["понедельник", "вторник", "среда", "четв
 
 def format_time(time: datetime.datetime, text) -> str:
     text = text \
-        .replace("{month}", "{month:0>2}") \
-        .replace("{day}", "{day:0>2}") \
-        .replace("{hour}", "{hour:0>2}") \
-        .replace("{minute}", "{minute:0>2}") \
-        .replace("{second}", "{second:0>2}")
+        .replace("{month_z}", "{month_z:0>2}") \
+        .replace("{day_z}", "{day_z:0>2}") \
+        .replace("{hour_z}", "{hour_z:0>2}") \
+        .replace("{minute_z}", "{minute_z:0>2}") \
+        .replace("{second_z}", "{second_z:0>2}")
 
     return text.format(year=time.year,
                        month=time.month,
@@ -27,7 +27,12 @@ def format_time(time: datetime.datetime, text) -> str:
                        day=time.day,
                        hour=time.hour,
                        minute=time.minute,
-                       second=time.second)
+                       second=time.second,
+                       day_z=time.day,
+                       month_z=time.month,
+                       hour_z=time.hour,
+                       minute_z=time.minute,
+                       second_z=time.second)
 
 
 def shift_time(time: datetime.datetime, shift: dict) -> datetime:

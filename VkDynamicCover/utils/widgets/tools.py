@@ -31,4 +31,6 @@ def create_widget(config, **kwargs):
         logger.warning(f"Неизвестное имя виджета - {name}")
         wid = widget.Widget
 
-    return wid(config, **kwargs)
+    res = wid(config, **kwargs)
+    logger.debug(f"Create widget with next params: {res.__dict__}")
+    return res
