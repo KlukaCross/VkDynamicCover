@@ -198,15 +198,18 @@ class Subscriber(Widget):
         if event.type == VkBotEventType.WALL_REPOST:
             if not self.is_valid_post(event.object["id"]):
                 return
-            self.add_point(event.object["owner_id"], "reposts", -1)
+            self.add_point(event.object["owner_id"], "reposts", 1)
+            return
 
         if event.type == VkBotEventType.WALL_POST_NEW:
-            if not self.is_valid_post(event.object["from_id"]) or event.object["from_id"] < 0:
+            if not self.is_valid_post(event.object["id"]) or event.object["from_id"] < 0:
                 return
             self.add_point(event.object.get("signer_id", -1), "posts", 1)
+            return
 
         if event.type == VkBotEventType.GROUP_JOIN:
             self.update_last_subs()
+            return
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
