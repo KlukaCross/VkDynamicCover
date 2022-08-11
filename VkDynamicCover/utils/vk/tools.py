@@ -1,6 +1,6 @@
 import random
 
-from vk_api import vk_api
+from vk_api import vk_api, exceptions
 from vk_api.bot_longpoll import VkBotLongPoll
 import requests
 
@@ -18,7 +18,10 @@ def push_cover(vk_session: vk_api.VkApi, surface_bytes: bytes, surface_width, su
                                                                 crop_x2=surface_width,
                                                                 crop_y2=surface_height)["upload_url"]
     pht = requests.post(upload_photo_url, files={"photo": surface_bytes}).json()
-    vk_meth.photos.saveOwnerCoverPhoto(hash=pht["hash"], photo=pht["photo"])
+    try:
+        vk_meth.photos.saveOwnerCoverPhoto(hash=pht["hash"], photo=pht["photo"])
+    except exceptions.ApiError as e:
+        logger.warning(f"Не удалось загрузить шапку - {e}")
 
 
 def get_random_image_url(vk_session: vk_api.VkApi, group_id: str, album_id: str, rand_func=lambda count: random.randint(0, count-1)) -> str:
