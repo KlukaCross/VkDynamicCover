@@ -222,6 +222,7 @@ class Subscriber(Widget):
         self.rating[user_id]["points"] = self.calc_points(user_id)
         return True
 
+    @logger.catch(reraise=False)
     def update_donates(self):
         if not self.donate_key:
             logger.warning("Отсутствует donate_key")
