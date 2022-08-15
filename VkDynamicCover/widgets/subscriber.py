@@ -178,6 +178,7 @@ class Subscriber(Widget):
         return datetime.datetime.now().timestamp() > self.rating_period[1]
 
     def longpoll_update(self, event):
+        logger.debug(f"Новое событие {event}")
         if event.type == VkBotEventType.WALL_REPLY_NEW:
             if not self.is_valid_post(event.object["post_id"]):
                 return
@@ -189,7 +190,7 @@ class Subscriber(Widget):
             "like_remove"
         ]:
             if event.object["object_owner_id"] != self.group_id or \
-                    not self.is_valid_post(event.object["object_id"]):
+                    not self.is_valid_post(event.object["thread_reply_id"]):
                 return
             point = 1 if event.type == "like_add" else -1
             self.add_point(event.object["liker_id"], "likes", point)
