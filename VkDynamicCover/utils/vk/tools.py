@@ -122,7 +122,7 @@ def get_group_member_ids(vk_session: vk_api.VkApi, group_id: int, sort, count=10
     return vk_meth.groups.getMembers(group_id=-group_id, sort=sort, count=count)["items"]
 
 
-@logger.catch(reraise=True)
+@logger.catch(reraise=False)
 def longpoll_listener(vk_session: vk_api.VkApi, group_id: int, callback, **kwargs: dict):
     longpoll = VkBotLongPoll(vk_session, group_id=-group_id)
     for event in longpoll.listen():

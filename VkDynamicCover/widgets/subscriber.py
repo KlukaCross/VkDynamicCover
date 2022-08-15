@@ -218,6 +218,7 @@ class Subscriber(Widget):
     def add_point(self, user_id, rating_type, count_points) -> bool:
         if user_id in self.ban_list or user_id < 0:
             return False
+        logger.debug(f"Пользователю {user_id} добавлено {count_points} очков к полю {rating_type}")
         self.rating.setdefault(user_id, MEMBER_RATING.copy())[rating_type] += count_points
         self.rating[user_id]["points"] = self.calc_points(user_id)
         return True
@@ -248,6 +249,7 @@ class Subscriber(Widget):
                                              group_id=self.group_id,
                                              sort="time_desc",
                                              count=len(self.lastSub_places))
+        logger.debug(f"Обновлён рейтинг последних подписчиков: {member_ids}")
         for i in range(len(member_ids)):
             self.lastSub_places[i].update_place(member_id=member_ids[i],
                                                 member_rating=self.rating.setdefault(member_ids[i],
