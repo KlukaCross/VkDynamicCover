@@ -1,3 +1,4 @@
+import time
 from functools import reduce
 
 from loguru import logger
@@ -9,6 +10,8 @@ COVER_HEIGHT = 530
 
 BACKGROUND = "background"
 FRONTGROUND = "frontground"
+
+SLEEP_SECONDS = 60
 
 
 class DynamicCover:
@@ -30,6 +33,17 @@ class DynamicCover:
 
         self.widget_cycle = config.get("widget_cycle", [])
         self.cur_widget_set = 0 if len(self.widget_cycle) > 0 else -1
+
+        sleep = config.get("sleep", 60)
+
+        self.sleep_cycle = [sleep] if isinstance(sleep, int) else sleep
+        self.cur_sleep = 0
+
+    def start(self):
+        while True:
+            self.update()
+            time.sleep(self.sleep_cycle[self.cur_sleep])
+            self.cur_sleep = self.cur_sleep + 1 if self.cur_sleep < len(self.sleep_cycle) - 1 else 0
 
     @logger.catch(reraise=False)
     def update(self):
