@@ -56,7 +56,7 @@ def get_group_statistics(vk_session: vk_api.VkApi, group_id: int, app_id: int,
 
 def get_post(vk_session: vk_api.VkApi, group_id: int, post_id: int):
     vk_meth = vk_session.get_api()
-    return vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])[0]
+    return vk_meth.wall.getById(posts=f"{group_id}_{post_id}")[0]
 
 
 def get_posts_from_date(vk_session: vk_api.VkApi, group_id: int, from_date_unixtime: int):
