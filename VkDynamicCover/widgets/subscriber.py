@@ -190,7 +190,8 @@ class Subscriber(Widget):
             "like_remove"
         ]:
             if event.object["object_owner_id"] != self.group_id or \
-                    not self.is_valid_post(event.object["thread_reply_id"]):
+                    event.object["object_type"] != "post" or \
+                    not self.is_valid_post(event.object["object_id"]):
                 return
             point = 1 if event.type == "like_add" else -1
             self.add_point(event.object["liker_id"], "likes", point)
