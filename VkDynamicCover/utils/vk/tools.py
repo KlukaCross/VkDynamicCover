@@ -21,7 +21,7 @@ def push_cover(vk_session: vk_api.VkApi, surface_bytes: bytes, surface_width, su
     try:
         vk_meth.photos.saveOwnerCoverPhoto(hash=pht["hash"], photo=pht["photo"])
     except exceptions.ApiError as e:
-        logger.warning(f"Не удалось загрузить шапку - {e}")
+        logger.warning(f"Не удалось загрузить шапку: {e}")
 
 
 def get_random_image_url(vk_session: vk_api.VkApi, group_id: str, album_id: str, rand_func=lambda count: random.randint(0, count-1)) -> str:
@@ -125,5 +125,9 @@ def get_group_member_ids(vk_session: vk_api.VkApi, group_id: int, sort, count=10
 @logger.catch(reraise=False)
 def longpoll_listener(vk_session: vk_api.VkApi, group_id: int, callback, **kwargs: dict):
     longpoll = VkBotLongPoll(vk_session, group_id=-group_id)
-    for event in longpoll.listen():
-        callback(event=event, **kwargs)
+    while True:
+        try:
+            for event in longpoll.listen():
+                callback(event=event, **kwargs)
+        except requests.exceptions.ReadTimeout as e:
+            logger.warning(f"Время ожидания ответа истекло.\n{e}")
