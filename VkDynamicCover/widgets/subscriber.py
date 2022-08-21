@@ -198,7 +198,7 @@ class Subscriber(Widget):
             return
 
         if event.type == VkBotEventType.WALL_REPOST:
-            if not self.is_valid_post(event.object["id"]):
+            if not self.is_valid_post(event.object["copy_history"][0]["id"]):
                 return
             self.add_point(event.object["owner_id"], "reposts", 1)
             return
