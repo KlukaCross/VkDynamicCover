@@ -63,7 +63,8 @@ def get_posts_from_date(vk_session: vk_api.VkApi, group_id: int, from_date_unixt
     vk_meth = vk_session.get_api()
     req = vk_meth.wall.get(owner_id=group_id)
     count_posts = req["count"]
-    if req["items"][0].get("is_pinned") and req["items"][0]["date"] >= from_date_unixtime:
+    # is maybe pinned post
+    if req["items"][0]["date"] >= from_date_unixtime:
         yield req["items"][0]
 
     for i in range(count_posts//100+1):

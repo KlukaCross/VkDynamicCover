@@ -103,6 +103,7 @@ class Subscriber(Widget):
                                        from_date_unixtime=self.rating_period[0])
 
         for p in posts:
+            logger.debug(f"Сбор информации о посте {p['id']}...")
             likes = vk.get_post_liker_ids(vk_session=self.vk_session,
                                           group_id=self.group_id,
                                           post_id=p["id"],
