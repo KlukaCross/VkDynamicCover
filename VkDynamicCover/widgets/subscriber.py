@@ -205,7 +205,7 @@ class Subscriber(Widget):
             return
 
         if event.type == VkBotEventType.WALL_POST_NEW:
-            if not self.is_valid_post(event.object["id"]) or event.object["from_id"] < 0:
+            if not self.is_valid_post(event.object["id"]):
                 return
             self.add_point(event.object.get("signer_id", -1), "posts", 1)
             return
