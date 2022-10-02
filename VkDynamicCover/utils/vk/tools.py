@@ -53,7 +53,9 @@ def get_group_statistics(vk_session: vk_api.VkApi, group_id: int, app_id: int,
 
 def get_post(vk_session: vk_api.VkApi, group_id: int, post_id: int):
     vk_meth = vk_session.get_api()
-    return vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])[0]
+    posts = vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])
+    if len(posts):
+        return posts[0]
 
 
 def get_posts_from_date(vk_session: vk_api.VkApi, group_id: int, from_date_unixtime: int):
@@ -89,10 +91,20 @@ def get_post_liker_ids(vk_session: vk_api.VkApi, group_id: int, post_id: int, li
 
 
 def get_post_comments(vk_session: vk_api.VkApi, group_id: int, post_id: int, comments_count: int):
+    """ возвращает все комментарии под постом, включая комментарии в ветках"""
     vk_meth = vk_session.get_api()
     for i in range(comments_count//100+1):
-        req = vk_meth.wall.getComments(owner_id=group_id, post_id=post_id, offset=i*100, count=100)
+        req = vk_meth.wall.getComments(owner_id=group_id, post_id=post_id, offset=i*100, count=100, thread_items_count=10)
         for v in req["items"]:
+            thread_count = v["thread"]["count"]
+            if thread_count > 10:
+                for j in range(thread_count // 100 + 1):
+                    reqq = vk_meth.wall.getComments(owner_id=group_id, post_id=post_id, offset=j * 100, count=100)
+                    for vv in reqq["items"]:
+                        yield vv
+            else:
+                for vv in v["thread"]["items"]:
+                    yield vv
             yield v
 
 
