@@ -1,6 +1,6 @@
 from .dynamic_cover import DynamicCover
 
 __author__ = "Oleg Mezenin"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __copyright__ = "Copyright (c) 2022 Oleg Mezenin"
 __license__ = "MIT"

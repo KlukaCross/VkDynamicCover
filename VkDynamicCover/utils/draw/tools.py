@@ -49,7 +49,11 @@ def get_byte_image(surface: Image) -> bytes:
 
 
 def get_image_from_url(url: str) -> Image:
-    return Image.open(request.urlopen(url))
+    try:
+        f = request.urlopen(url)
+        return Image.open(f)
+    except Exception as e:
+        logger.warning(f"Не удалось загрузить фото: {e}")
 
 
 def get_image_from_path(path: Path) -> Image:

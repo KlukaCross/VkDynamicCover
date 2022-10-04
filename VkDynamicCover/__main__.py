@@ -9,7 +9,6 @@ from loguru import logger
 from . import DynamicCover, __version__
 
 CONFIG_PATH = Path.cwd() / "config.json"
-SLEEP_SECONDS = 60
 
 
 def create_parser():
@@ -30,13 +29,6 @@ def create_parser():
         type=Path,
         default=CONFIG_PATH,
         help=f"Абсолютный путь к конфиг-файлу (по умолчанию {CONFIG_PATH})"
-    )
-    parser.add_argument(
-        "-s",
-        "--sleep",
-        type=int,
-        default=SLEEP_SECONDS,
-        help=f"Обновлять шапку каждые N секунд (по умолчанию {SLEEP_SECONDS})"
     )
     parser.add_argument(
         "-d",
@@ -90,8 +82,5 @@ if __name__ == "__main__":
         sys.exit()
 
     dynamic_cover = DynamicCover(config=config)
-
-    while True:
-        dynamic_cover.update()
-        time.sleep(args.sleep)
+    dynamic_cover.start()
 

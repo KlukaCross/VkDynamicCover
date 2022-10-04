@@ -103,7 +103,7 @@ class Subscriber(Widget):
                                        from_date_unixtime=self.rating_period[0])
 
         for p in posts:
-            logger.debug(f"post {self.group_id}_{p}")
+            logger.debug(f"Сбор информации о посте {p['id']}...")
             likes = vk.get_post_liker_ids(vk_session=self.vk_session,
                                           group_id=self.group_id,
                                           post_id=p["id"],
@@ -179,6 +179,7 @@ class Subscriber(Widget):
         return datetime.datetime.now().timestamp() > self.rating_period[1]
 
     def longpoll_update(self, event):
+        logger.debug(f"Новое событие {event}")
         if event.type == VkBotEventType.WALL_REPLY_NEW:
             if not self.is_valid_post(event.object["post_id"]):
                 return
@@ -190,6 +191,7 @@ class Subscriber(Widget):
             "like_remove"
         ]:
             if event.object["object_owner_id"] != self.group_id or \
+                    event.object["object_type"] != "post" or \
                     not self.is_valid_post(event.object["object_id"]):
                 return
             point = 1 if event.type == "like_add" else -1
@@ -197,17 +199,20 @@ class Subscriber(Widget):
             return
 
         if event.type == VkBotEventType.WALL_REPOST:
-            if not self.is_valid_post(event.object["id"]):
+            if not self.is_valid_post(event.object["copy_history"][0]["id"]):
                 return
-            self.add_point(event.object["owner_id"], "reposts", -1)
+            self.add_point(event.object["owner_id"], "reposts", 1)
+            return
 
         if event.type == VkBotEventType.WALL_POST_NEW:
-            if not self.is_valid_post(event.object["from_id"]) or event.object["from_id"] < 0:
+            if not self.is_valid_post(event.object["id"]):
                 return
             self.add_point(event.object.get("signer_id", -1), "posts", 1)
+            return
 
         if event.type == VkBotEventType.GROUP_JOIN:
             self.update_last_subs()
+            return
 
     def is_valid_post(self, post_id) -> bool:
         post = vk.get_post(vk_session=self.vk_session, group_id=self.group_id, post_id=post_id)
@@ -219,10 +224,12 @@ class Subscriber(Widget):
     def add_point(self, user_id, rating_type, count_points) -> bool:
         if user_id in self.ban_list or user_id < 0:
             return False
+        logger.debug(f"Пользователю {user_id} добавлено {count_points} очков к полю {rating_type}")
         self.rating.setdefault(user_id, MEMBER_RATING.copy())[rating_type] += count_points
         self.rating[user_id]["points"] = self.calc_points(user_id)
         return True
 
+    @logger.catch(reraise=False)
     def update_donates(self):
         if not self.donate_key:
             logger.warning("Отсутствует donate_key")
@@ -248,6 +255,7 @@ class Subscriber(Widget):
                                              group_id=self.group_id,
                                              sort="time_desc",
                                              count=len(self.lastSub_places))
+        logger.debug(f"Обновлён рейтинг последних подписчиков: {member_ids}")
         for i in range(len(member_ids)):
             self.lastSub_places[i].update_place(member_id=member_ids[i],
                                                 member_rating=self.rating.setdefault(member_ids[i],
