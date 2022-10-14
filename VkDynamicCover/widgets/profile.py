@@ -4,8 +4,8 @@ from ..utils import widgets, vk
 
 
 class Profile(TextSet):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.crop_type = kwargs.get("crop_type", "crop")
 

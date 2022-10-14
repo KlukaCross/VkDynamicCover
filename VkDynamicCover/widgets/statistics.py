@@ -14,8 +14,8 @@ SUPPORTED_REACH_STATS = ["reach", "reach_subscribers", "mobile_reach"]
 
 
 class Statistics(TextSet):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.interval = kwargs.get("interval", "day")
         self.group_id = kwargs.get("group_id") or self.group_id
 

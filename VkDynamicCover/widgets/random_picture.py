@@ -6,8 +6,8 @@ from .picture import Picture
 
 
 class RandomPicture(Picture):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.random_function = kwargs.get("random_function", lambda count: random.randint(0, count-1))
         self.group_id = kwargs.get("group_id") or self.group_id
         self.album_id = kwargs.get("album_id")

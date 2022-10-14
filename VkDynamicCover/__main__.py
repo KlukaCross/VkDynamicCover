@@ -8,7 +8,8 @@ from loguru import logger
 
 from . import DynamicCover, __version__
 
-CONFIG_PATH = Path.cwd() / "config.json"
+MAIN_CONFIG_PATH = Path.cwd() / "main_config.json"
+WIDGET_CONFIG_PATH = Path.cwd() / "widget_config.json"
 
 
 def create_parser():
@@ -24,11 +25,18 @@ def create_parser():
         version=f"VkDynamicCover {__version__}"
     )
     parser.add_argument(
-        "-c",
-        "--config",
+        "-m",
+        "--main_config",
         type=Path,
-        default=CONFIG_PATH,
-        help=f"Абсолютный путь к конфиг-файлу (по умолчанию {CONFIG_PATH})"
+        default=MAIN_CONFIG_PATH,
+        help=f"Абсолютный путь к файлу с основными настройками (по умолчанию {MAIN_CONFIG_PATH})"
+    )
+    parser.add_argument(
+        "-w",
+        "--widget_config",
+        type=Path,
+        default=WIDGET_CONFIG_PATH,
+        help=f"Абсолютный путь к файлу с описанием виджетов и их отображения (по умолчанию {WIDGET_CONFIG_PATH})"
     )
     parser.add_argument(
         "-d",
@@ -70,17 +78,20 @@ if __name__ == "__main__":
         Python {sys.version}
         VkDynamicCover {__version__}
         OS: {sys.platform}
-        Config path: {args.config}
+        Main config path: {args.main_config}
+        Widget config path: {args.widget_config}
         """
     )
 
     try:
-        with args.config.open() as f:
-            config: dict = json.load(f)
+        with args.main_config.open() as f:
+            main_config: dict = json.load(f)
+        with args.widget_config.open() as f:
+            widget_config: dict = json.load(f)
     except OSError as e:
         logger.error(e)
         sys.exit()
 
-    dynamic_cover = DynamicCover(config=config)
+    dynamic_cover = DynamicCover(main_config=main_config, widget_config=widget_config)
     dynamic_cover.start()
 

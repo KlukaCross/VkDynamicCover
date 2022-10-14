@@ -5,8 +5,8 @@ from ..utils import time
 
 
 class Date(TextSet):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.shift = kwargs.get("shift", {})
         self.shift.setdefault("year", 0)

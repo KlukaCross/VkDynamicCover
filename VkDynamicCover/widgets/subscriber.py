@@ -14,8 +14,8 @@ MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates":
 
 
 class Subscriber(Widget):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.period = kwargs.get("period", "month")
         self.rating_period = self.get_rating_period()

@@ -3,8 +3,8 @@ from ..utils import draw
 
 
 class Text(Widget):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.text = kwargs.get("text", "")
 

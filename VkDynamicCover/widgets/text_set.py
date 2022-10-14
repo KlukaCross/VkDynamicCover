@@ -4,8 +4,8 @@ from ..utils import widgets
 
 
 class TextSet(Text):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         texts_raw = kwargs.get("texts", [])
         default_args = kwargs.get("default_args", {})
