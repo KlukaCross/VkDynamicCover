@@ -42,6 +42,6 @@ def shift_time(time: datetime.datetime, shift: dict) -> datetime:
                                minutes=shift["minute"],
                                seconds=shift["second"])
 
-    time = time.replace(year=time.year + shift["year"] + math.trunc((time.month + shift["month"]) / 12),
-                        month=(time.month + shift["month"]) % 12)
+    time = time.replace(year=time.year + shift["year"] + math.trunc((time.month + shift["month"] - 1) / 12),
+                        month=(time.month + shift["month"] - 1) % 12 + 1)
     return time
