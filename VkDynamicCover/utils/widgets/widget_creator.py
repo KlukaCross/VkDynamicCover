@@ -27,35 +27,35 @@ class WidgetCreator:
     def _rec_fill_info(self, kw_widget_info: dict, widget_kwargs: dict) -> dict:
         if "parent" not in widget_kwargs:
             return widget_kwargs
-        if widget_kwargs["parent"] in kw_widget_info:
-            self._rec_fill_info(kw_widget_info, kw_widget_info[widget_kwargs["parent"]])
-            widget_kwargs = {**kw_widget_info[widget_kwargs["parent"]], **widget_kwargs}
+        parent_name = widget_kwargs["parent"]
+        if parent_name in kw_widget_info:
+            self._rec_fill_info(kw_widget_info, kw_widget_info[parent_name])
+            widget_kwargs = {**kw_widget_info[parent_name], **widget_kwargs}
         else:
-            logger.warning(f"Для виджета {widget_kwargs['name']} не найден виджет-родитель {widget_kwargs['parent']}")
+            logger.warning(f"Для виджета {widget_kwargs['name']} не найден виджет-родитель {parent_name}")
         return widget_kwargs
 
     def create_widget(self, **kwargs) -> widget.Widget:
         tp = kwargs.get("type")
-
-        if tp == "Text":
+        if tp == text.Text.__name__:
             wid = text.Text
-        elif tp == "TextSet":
+        elif tp == text_set.TextSet.__name__:
             wid = text_set.TextSet
-        elif tp == "Picture":
+        elif tp == picture.Picture.__name__:
             wid = picture.Picture
-        elif tp == "Date":
+        elif tp == date.Date.__name__:
             wid = date.Date
-        elif tp == "RandomPicture":
+        elif tp == random_picture.RandomPicture.__name__:
             wid = random_picture.RandomPicture
-        elif tp == "Statistics":
+        elif tp == statistics.Statistics.__name__:
             wid = statistics.Statistics
-        elif tp == "Subscriber":
-            wid = subscriber.Subscriber
-        elif tp == "PeriodInfo":
+        elif tp == rating.Rating.__name__:
+            wid = rating.Rating
+        elif tp == other.PeriodInfo.__name__:
             wid = other.PeriodInfo
-        elif tp == "Profile":
+        elif tp == profile.Profile.__name__:
             wid = profile.Profile
-        elif tp == "Avatar":
+        elif tp == other.Avatar.__name__:
             wid = other.Avatar
         else:
             logger.warning(f"Неизвестный тип виджета - {tp}")
@@ -67,3 +67,4 @@ class WidgetCreator:
         res = wid(**res_kwargs)
         logger.debug(f"Create widget {res}")
         return res
+

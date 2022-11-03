@@ -13,7 +13,7 @@ from ..utils.widgets.other import MemberPlace
 MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates": 0, "points": 0}
 
 
-class Subscriber(Widget):
+class Rating(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -260,3 +260,53 @@ class Subscriber(Widget):
             self.lastSub_places[i].update_place(member_id=member_ids[i],
                                                 member_rating=self.rating.setdefault(member_ids[i],
                                                                                      MEMBER_RATING.copy()))
+
+class MemberPlace(TextSet):
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
+
+        profile = kwargs.get("profile")
+        profile["name"] = "Profile"
+        self.profile = widgets.create_widget(config, **profile)
+
+        random_avatar = kwargs.get("random_avatar", {})
+        random_avatar["name"] = "RandomPicture"
+        self.random_avatar = RandomAvatar(config, **random_avatar) if "random_avatar" in kwargs else None
+
+        default_image = kwargs.get("default_image", {})
+        default_image["name"] = "Picture"
+        self.default_image = widgets.create_widget(config, **default_image)
+
+        self.user_id = None
+        self.member_rating: dict = {}
+
+    def draw(self, surface):
+        surface = super().draw(surface)
+        if not self.user_id:
+            surface = self.default_image.draw(surface)
+            return surface
+        surface = self.profile.draw(surface)
+        if self.random_avatar:
+            surface = self.random_avatar.draw(surface)
+            return surface
+        return surface
+
+    def get_format_text(self, text):
+        if not self.user_id:
+            return ""
+        user = vk.get_user(vk_session=self.vk_session, user_id=self.user_id)
+        return text.format(first_name=user["first_name"],
+                           last_name=user["last_name"],
+                           likes=self.member_rating["likes"],
+                           comments=self.member_rating["comments"],
+                           reposts=self.member_rating["reposts"],
+                           points=self.member_rating["points"],
+                           posts=self.member_rating["posts"],
+                           donates=self.member_rating["donates"])
+
+    def update_place(self, member_id, member_rating: dict):
+        self.user_id = member_id
+        self.member_rating = member_rating
+        self.profile.set_user_id(member_id)
+        if self.random_avatar:
+            self.random_avatar.set_user_id(member_id)
