@@ -1,0 +1,3 @@
+from text_shifter import TextShifter
+from text_insterter import TextInserter
+from text_calculator import TextCalculator

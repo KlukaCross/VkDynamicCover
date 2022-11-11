@@ -7,7 +7,7 @@ from loguru import logger
 
 from .widget import Widget
 
-from ..utils import vk, draw, widgets, donates
+from ..utils import vk_tools, draw, widgets, donates
 from ..utils.widgets.other import MemberPlace
 
 MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates": 0, "points": 0}

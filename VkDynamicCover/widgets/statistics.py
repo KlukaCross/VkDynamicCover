@@ -1,7 +1,7 @@
 from loguru import logger
 
-from .text_set import TextSet
-from ..utils import vk
+from .message import Message
+from ..utils import vk_tools
 
 
 SUPPORTED_INFO_STATS = ["members_count"]
@@ -13,14 +13,10 @@ SUPPORTED_VISITORS_STATS = ["views", "visitors"]
 SUPPORTED_REACH_STATS = ["reach", "reach_subscribers", "mobile_reach"]
 
 
-class Statistics(TextSet):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.interval = kwargs.get("interval", "day")
-        self.group_id = kwargs.get("group_id") or self.group_id
-
-        if not self.app_id:
-            logger.error("В файле config отсутствует параметр app_id")
+class Statistics(Message):
+    def __init__(self):
+        super().__init__()
+        self.interval = "day"
 
     def get_format_text(self, text):
         info_res = vk.get_group_info(vk_session=self.vk_session,
@@ -42,3 +38,12 @@ class Statistics(TextSet):
                                                     ]}
 
         return text.format(**stats)
+
+
+    @property
+    def interval(self) -> str:
+        return self._interval
+
+    @interval.setter
+    def interval(self, interval: str):
+        self._interval = interval

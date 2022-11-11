@@ -1,7 +1,7 @@
 import random
 from pathlib import Path
 
-from ..utils import draw, vk
+from ..utils import draw, vk_tools
 from .picture import Picture
 
 

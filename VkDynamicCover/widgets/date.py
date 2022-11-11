@@ -1,10 +1,10 @@
 import datetime
 
-from .text_set import TextSet
+from .message import Message
 from ..utils import time
 
 
-class Date(TextSet):
+class Date(Message):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

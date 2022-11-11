@@ -1,13 +1,13 @@
 import datetime
 
-from VkDynamicCover.widgets.text_set import TextSet
+from VkDynamicCover.widgets.message import Message
 from VkDynamicCover.widgets.picture import Picture
 
-from VkDynamicCover.utils import vk, draw, time, widgets
+from VkDynamicCover.utils import vk_tools, draw, time, widgets
 from VkDynamicCover.widgets.random_picture import RandomPicture
 
 
-class PeriodInfo(TextSet):
+class PeriodInfo(Message):
     def __init__(self, config, **kwargs):
         super().__init__(config, **kwargs)
 

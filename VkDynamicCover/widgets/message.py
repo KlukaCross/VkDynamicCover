@@ -1,9 +1,10 @@
-from .text import Text
+from VkDynamicCover.widgets.text import Text
+from VkDynamicCover.widgets.widget import Widget
 
-from ..utils import widgets
+from VkDynamicCover.utils import widgets
 
 
-class TextSet(Text):
+class Message(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

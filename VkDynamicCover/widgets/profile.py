@@ -1,9 +1,9 @@
-from VkDynamicCover.widgets import text_set, picture
+from VkDynamicCover.widgets import message, picture
 
-from VkDynamicCover.utils import widgets, vk
+from VkDynamicCover.utils import widgets, vk_tools
 
 
-class Profile(text_set.TextSet, picture.Picture):
+class Profile(text_set.Message, picture.Picture):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

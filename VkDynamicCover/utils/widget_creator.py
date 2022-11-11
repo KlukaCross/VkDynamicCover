@@ -39,8 +39,8 @@ class WidgetCreator:
         tp = kwargs.get("type")
         if tp == text.Text.__name__:
             wid = text.Text
-        elif tp == text_set.TextSet.__name__:
-            wid = text_set.TextSet
+        elif tp == text_set.Message.__name__:
+            wid = text_set.Message
         elif tp == picture.Picture.__name__:
             wid = picture.Picture
         elif tp == date.Date.__name__:
