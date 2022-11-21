@@ -9,19 +9,19 @@ class Text(Widget):
     def __init__(self):
         super().__init__()
 
-        self.text = ""
+        self._text = ""
 
-        self.font_name = None
-        self.font_size = 0
+        self._font_name = None
+        self._font_size = 0
 
-        self.fill = None
-        self.anchor = None
-        self.spacing = 4
-        self.direction = None
-        self.stroke_width = 0
-        self.stroke_fill = None
+        self._fill = None
+        self._anchor = None
+        self._spacing = 4
+        self._direction = None
+        self._stroke_width = 0
+        self._stroke_fill = None
 
-        self.formatter = None
+        self._formatter = None
 
     def draw(self, surface):
         text = self.get_text()
@@ -120,9 +120,9 @@ class Text(Widget):
 class LimitedText(Text):
     def __init__(self):
         super().__init__()
-        self.max = None
-        self.action = LIMITED_ACTION.NONE
-        self.end = ""
+        self._max = None
+        self._action = LIMITED_ACTION.NONE
+        self._end = ""
 
     def get_text(self) -> str:
         return self.get_formatted_text(self.text)
@@ -143,7 +143,6 @@ class LimitedText(Text):
             res_text += line + "\n"
 
         return res_text[:-1]
-
 
     @property
     def max(self) -> int:

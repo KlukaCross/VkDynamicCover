@@ -1,7 +1,9 @@
 from loguru import logger
 
 from .message import Message
+from VkDynamicCover.helpers import text_formatting as formatting
 from ..utils import vk_tools
+from VkDynamicCover.utils import VkTools
 
 
 SUPPORTED_INFO_STATS = ["members_count"]
@@ -17,13 +19,13 @@ class Statistics(Message):
     def __init__(self):
         super().__init__()
         self.interval = "day"
+        self.formatter = formatting.TextInserter(format_dict={
+            "member_count": formatting.FormatterFunction(lambda: VkTools.get_group_info()["member_count"], )
+        })
 
     def get_format_text(self, text):
-        info_res = vk.get_group_info(vk_session=self.vk_session,
-                                     group_id=self.group_id,
-                                     fields=",".join(SUPPORTED_INFO_STATS))
-        stat_res = vk.get_group_statistics(vk_session=self.vk_session, group_id=self.group_id, app_id=self.app_id,
-                                           interval=self.interval)[0]
+        info_res = VkTools.get_group_info(group_id=self.group_id, fields=",".join(SUPPORTED_INFO_STATS))
+        stat_res = VkTools.get_group_statistics(group_id=self.group_id, interval=self.interval)[0]
 
         interval_stats = {**stat_res.get("activity", {}),
                           **stat_res.get("visitors", {}),
@@ -38,7 +40,6 @@ class Statistics(Message):
                                                     ]}
 
         return text.format(**stats)
-
 
     @property
     def interval(self) -> str:

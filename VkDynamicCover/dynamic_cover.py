@@ -4,7 +4,7 @@ from functools import reduce
 
 from loguru import logger
 
-from .utils import vk_tools, draw, widgets
+from .utils import VkTools, draw, widgets
 
 COVER_WIDTH = 1590
 COVER_HEIGHT = 530
@@ -17,7 +17,8 @@ class DynamicCover:
     def __init__(self, main_config: dict, widget_config: dict):
 
         token = main_config["token"]
-        self.vk_session = vk.create_session(token)
+        self.vk_session = VkTools.create_session(token)
+        VkTools.init(self.vk_session, main_config["app_id"])
         self.group_id = main_config["group_id"]
         self.surface = draw.create_surface(COVER_WIDTH, COVER_HEIGHT)
 
@@ -43,7 +44,7 @@ class DynamicCover:
 
         self.widget_drawing.draw()
 
-        vk.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
+        VkTools.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
                       surface_width=self.surface.width, surface_height=self.surface.height,
                       group_id=self.group_id)
         logger.info(f"Обложка успешно обновлена")

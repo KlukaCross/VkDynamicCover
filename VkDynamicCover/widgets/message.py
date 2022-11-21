@@ -1,37 +1,24 @@
+import typing
+from functools import reduce
+
 from VkDynamicCover.widgets.text import Text
 from VkDynamicCover.widgets.widget import Widget
 
-from VkDynamicCover.utils import widgets
-
 
 class Message(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
+        super().__init__()
 
-        texts_raw = kwargs.get("texts", [])
-        default_args = kwargs.get("default_args", {})
+        self._text_widgets: typing.List[Text] = []
 
-        self.text_widgets = []
-        self.texts = []
-
-        for d in texts_raw:
-            if isinstance(d, str):
-                d = {"text": d}
-            d.setdefault("name", "Text")
-            d = {**default_args, **d}
-
-            self.text_widgets.append(widgets.create_widget(config, **d))
-            self.texts.append(d["text"])
+        self.formatter = None
 
     def draw(self, surface):
         surface = super().draw(surface)
-        for i in range(len(self.texts)):
-            self.text_widgets[i].text = self.get_format_text(self.texts[i])
-            surface = self.text_widgets[i].draw(surface)
+        surface = reduce(lambda x, y: y.draw(x), self._text_widgets, surface)
         return surface
 
-    def get_format_text(self, text) -> str:
-        return text
+    def add_text(self, text: Text):
+        text.formatter = self.formatter
+        self._text_widgets.append(text)
 
-    def get_text(self) -> str:
-        return self.get_format_text(self.text)

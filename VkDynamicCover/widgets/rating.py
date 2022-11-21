@@ -1,4 +1,5 @@
 import datetime
+import typing
 from functools import reduce
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -9,16 +10,23 @@ from .widget import Widget
 
 from ..utils import vk_tools, draw, widgets, donates
 from ..utils.widgets.other import MemberPlace
+from VkDynamicCover.utils import VkTools
+from VkDynamicCover.types import Interval
 
 MEMBER_RATING = {"likes": 0, "comments": 0, "reposts": 0, "posts": 0, "donates": 0, "points": 0}
 
 
 class Rating(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
+        super().__init__()
 
-        self.period = kwargs.get("period", "month")
-        self.rating_period = self.get_rating_period()
+        self.period: str = None  # = kwargs.get("period", "month")
+        self.places: typing.List[RatingPlace]
+        self.ban_list: typing.List[int]
+        self.point_formula: str
+        self.rating: typing.Dict[int, MemberInfo]
+        self._unixtime_interval: Interval = Interval()
+
         self.group_id = kwargs.get("group_id") or self.group_id
 
         self.point_weights = kwargs.get("point_weights", {
@@ -64,20 +72,14 @@ class Rating(Widget):
     def draw(self, surface):
         self.update_rating()
 
-        surface = reduce(lambda x, y: y.draw(x), self.like_places, surface)
-        surface = reduce(lambda x, y: y.draw(x), self.repost_places, surface)
-        surface = reduce(lambda x, y: y.draw(x), self.comment_places, surface)
-        surface = reduce(lambda x, y: y.draw(x), self.point_places, surface)
-        surface = reduce(lambda x, y: y.draw(x), self.lastSub_places, surface)
-        surface = reduce(lambda x, y: y.draw(x), self.post_places, surface)
-        surface = reduce(lambda x, y: y.draw(x), self.donate_places, surface)
+        surface = reduce(lambda x, y: y.draw(x), self.places, surface)
 
         if self.period_info:
             surface = self.period_info.draw(surface)
 
         return surface
 
-    def get_rating_period(self) -> (int, int):
+    def _set_period_interval(self) -> (int, int):
         tmp = datetime.datetime.now()
         if self.period == "day":
             fr = tmp.replace(hour=0, minute=0, second=0)
@@ -93,29 +95,18 @@ class Rating(Widget):
             to = fr.replace(year=fr.year + 1)
         else:
             logger.warning(f"Неизвестный период - {self.period}")
-            return [0, 0]
-        return int(fr.timestamp()), int(to.timestamp())
+            fr = to = 0
+        self._unixtime_interval = Interval(int(fr.timestamp()), int(to.timestamp()))
 
     def init_rating(self):
         logger.info("Инициализируется рейтинг для виджета subscriber...")
-        posts = vk.get_posts_from_date(vk_session=self.vk_session,
-                                       group_id=self.group_id,
-                                       from_date_unixtime=self.rating_period[0])
+        posts = VkTools.get_posts_from_date(group_id=self.group_id, from_date_unixtime=self._unixtime_interval.fr)
 
         for p in posts:
             logger.debug(f"Сбор информации о посте {p['id']}...")
-            likes = vk.get_post_liker_ids(vk_session=self.vk_session,
-                                          group_id=self.group_id,
-                                          post_id=p["id"],
-                                          likes_count=p["likes"]["count"])
-            comments = vk.get_post_comments(vk_session=self.vk_session,
-                                            group_id=self.group_id,
-                                            post_id=p["id"],
-                                            comments_count=p["comments"]["count"])
-            reposts = vk.get_post_reposts(vk_session=self.vk_session,
-                                          group_id=self.group_id,
-                                          post_id=p["id"],
-                                          reposts_count=p["reposts"]["count"])
+            likes = VkTools.get_post_liker_ids(group_id=self.group_id, post_id=p["id"], likes_count=p["likes"]["count"])
+            comments = VkTools.get_post_comments(group_id=self.group_id, post_id=p["id"], comments_count=p["comments"]["count"])
+            reposts = VkTools.get_post_reposts(group_id=self.group_id, post_id=p["id"], reposts_count=p["reposts"]["count"])
 
             for i in likes:
                 self.add_point(i, "likes", 1)

@@ -7,9 +7,9 @@ class Widget:
     def __init__(self):
         self.group_id = 0
 
-        self.type = "Widget"
-        self.name = None
-        self.xy = [0, 0]
+        self._type = None
+        self._name = None
+        self._xy = None
 
     def draw(self, surface: Image) -> Image:
         return surface

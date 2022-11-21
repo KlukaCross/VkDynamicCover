@@ -5,10 +5,10 @@ from ..utils import time
 
 
 class Date(Message):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
+        super().__init__()
 
-        self.shift = kwargs.get("shift", {})
+        self._shift = {}
         self.shift.setdefault("year", 0)
         self.shift.setdefault("month", 0)
         self.shift.setdefault("week", 0)
@@ -22,4 +22,7 @@ class Date(Message):
         t = time.shift_time(t, self.shift)
         return time.format_time(t, text)
 
+    @property
+    def shift(self) -> dict:
+        return self._shift
 

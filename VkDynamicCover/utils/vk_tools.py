@@ -10,8 +10,13 @@ from vk_api.bot_longpoll import VkBotLongPoll
 from loguru import logger
 
 
-class VkTools(metaclass=MetaSingleton):
-    def __init__(self, vk_session: vk_api.VkApi, app_id: str):
+class _VkTools(metaclass=MetaSingleton):
+    def __init__(self):
+        self._vk_session = None
+        self._app_id = None
+        self._vk_meth = None
+
+    def init(self, vk_session: vk_api.VkApi, app_id: str):
         self._vk_session = vk_session
         self._app_id = app_id
         self._vk_meth = self._vk_session.get_api()
@@ -22,9 +27,9 @@ class VkTools(metaclass=MetaSingleton):
 
     def push_cover(self, surface_bytes: bytes, surface_width, surface_height, group_id: int):
         upload_photo_url = self._vk_meth.photos.getOwnerCoverPhotoUploadServer(group_id=-group_id,
-                                                                         crop_x=0, crop_y=0,
-                                                                         crop_x2=surface_width,
-                                                                         crop_y2=surface_height)["upload_url"]
+                                                                               crop_x=0, crop_y=0,
+                                                                               crop_x2=surface_width,
+                                                                               crop_y2=surface_height)["upload_url"]
         pht = requests.post(upload_photo_url, files={"photo": surface_bytes}).json()
         try:
             self._vk_meth.photos.saveOwnerCoverPhoto(hash=pht["hash"], photo=pht["photo"])
@@ -143,3 +148,5 @@ class VkTools(metaclass=MetaSingleton):
             except requests.exceptions.ReadTimeout as e:
                 logger.warning(f"Время ожидания ответа истекло.\n{e}")
 
+
+VkTools = _VkTools()
