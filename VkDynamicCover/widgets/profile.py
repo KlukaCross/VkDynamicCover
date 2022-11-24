@@ -1,5 +1,4 @@
 from VkDynamicCover.widgets.widget import Widget
-from VkDynamicCover.widgets.message import Message
 from VkDynamicCover.widgets.picture import Picture
 
 from VkDynamicCover.utils import widgets, vk_tools

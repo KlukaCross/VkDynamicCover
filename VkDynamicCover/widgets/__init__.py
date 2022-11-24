@@ -1,1 +1,1 @@
-from . import text, picture, date, random_picture, statistics, rating, message, widget, profile
+from . import text, picture, date, random_picture, statistics, rating, widget, profile

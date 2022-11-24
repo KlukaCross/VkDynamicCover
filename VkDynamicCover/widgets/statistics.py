@@ -1,6 +1,5 @@
 from loguru import logger
 
-from .message import Message
 from VkDynamicCover.helpers import text_formatting as formatting
 from ..utils import vk_tools
 from VkDynamicCover.utils import VkTools
@@ -15,7 +14,7 @@ SUPPORTED_VISITORS_STATS = ["views", "visitors"]
 SUPPORTED_REACH_STATS = ["reach", "reach_subscribers", "mobile_reach"]
 
 
-class Statistics(Message):
+class Statistics():
     def __init__(self):
         super().__init__()
         self.interval = "day"

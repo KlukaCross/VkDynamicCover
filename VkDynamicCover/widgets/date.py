@@ -1,10 +1,9 @@
 import datetime
 
-from .message import Message
 from ..utils import time
 
 
-class Date(Message):
+class Date():
     def __init__(self):
         super().__init__()
 

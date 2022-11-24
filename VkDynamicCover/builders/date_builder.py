@@ -1,5 +1,5 @@
-from VkDynamicCover.builders.message_builder import MessageBuilder
+from VkDynamicCover.builders.widget_builder import WidgetBuilder
 
 
-class DateBuilder(MessageBuilder):
+class DateBuilder(WidgetBuilder):
     pass

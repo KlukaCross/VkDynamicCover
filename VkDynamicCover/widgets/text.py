@@ -21,8 +21,6 @@ class Text(Widget):
         self._stroke_width = 0
         self._stroke_fill = None
 
-        self._formatter = None
-
     def draw(self, surface):
         text = self.get_text()
         draw.draw_text(surface=surface, text=text, font_name=self.font_name, font_size=self.font_size,
@@ -106,6 +104,15 @@ class Text(Widget):
     def stroke_fill(self, stroke_fill: int):
         self._stroke_fill = stroke_fill
 
+
+class FormattingText(Text):
+    def __init__(self):
+        super().__init__()
+        self._formatter = None
+
+    def get_text(self) -> str:
+        return self._formatter.get_format_text()
+
     @property
     def formatter(self) -> typing.Optional[TextFormatter]:
         return self._formatter
@@ -117,7 +124,7 @@ class Text(Widget):
         self._formatter = formatter
 
 
-class LimitedText(Text):
+class LimitedText(FormattingText):
     def __init__(self):
         super().__init__()
         self._max = None
@@ -125,9 +132,9 @@ class LimitedText(Text):
         self._end = ""
 
     def get_text(self) -> str:
-        return self.get_formatted_text(self.text)
+        return self._get_formatted_text(super().get_text())
 
-    def get_formatted_text(self, text):
+    def _get_formatted_text(self, text):
         if not self.max or len(text) <= self.max:
             return text
 
@@ -139,7 +146,7 @@ class LimitedText(Text):
                     line = line[:self.max] + self.end
                 elif self.action == LIMITED_ACTION.NEWLINE:
                     line = line[:self.max-1] + self.end + "\n" + \
-                           self.get_formatted_text(line[self.max:])
+                           self._get_formatted_text(line[self.max:])
             res_text += line + "\n"
 
         return res_text[:-1]
@@ -167,3 +174,11 @@ class LimitedText(Text):
     @end.setter
     def end(self, end: str):
         self._end = end
+
+
+class SpacedText(FormattingText):
+    def __init__(self):
+        super().__init__()
+
+    def get_text(self) -> str:
+        pass

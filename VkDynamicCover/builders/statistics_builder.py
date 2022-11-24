@@ -1,10 +1,10 @@
-from VkDynamicCover.builders.message_builder import MessageBuilder
+from VkDynamicCover.builders.widget_builder import WidgetBuilder
 from VkDynamicCover.widgets.statistics import Statistics
 
 PROPERTIES = ("interval", "group_id")
 
 
-class StatisticsBuilder(MessageBuilder):
+class StatisticsBuilder(WidgetBuilder):
     def create(self, **kwargs) -> Statistics:
         widget = Statistics()
         self.wrap(widget, **kwargs)
