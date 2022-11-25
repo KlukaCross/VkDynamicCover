@@ -1,5 +1,9 @@
+from VkDynamicCover.builders.text_builder import TextBuilder
 from VkDynamicCover.builders.widget_builder import WidgetBuilder
+from VkDynamicCover.widgets.date import Date
 
 
 class DateBuilder(WidgetBuilder):
-    pass
+    def create(self, **kwargs) -> Date:
+        kwargs["text"] = TextBuilder().create(**kwargs.get("text", {}))
+        return Date(**kwargs)

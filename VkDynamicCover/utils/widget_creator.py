@@ -39,14 +39,10 @@ class WidgetCreator:
         tp = kwargs.get("type")
         if tp == text.Text.__name__:
             wid = text.Text
-        elif tp == text_set.Message.__name__:
-            wid = text_set.Message
         elif tp == picture.Picture.__name__:
             wid = picture.Picture
         elif tp == date.Date.__name__:
             wid = date.Date
-        elif tp == random_picture.RandomPicture.__name__:
-            wid = random_picture.RandomPicture
         elif tp == statistics.Statistics.__name__:
             wid = statistics.Statistics
         elif tp == rating.Rating.__name__:
@@ -55,8 +51,6 @@ class WidgetCreator:
             wid = other.PeriodInfo
         elif tp == profile.Profile.__name__:
             wid = profile.Profile
-        elif tp == other.Avatar.__name__:
-            wid = other.Avatar
         else:
             logger.warning(f"Неизвестный тип виджета - {tp}")
             wid = widget.Widget

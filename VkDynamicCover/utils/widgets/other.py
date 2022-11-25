@@ -3,7 +3,6 @@ import datetime
 from VkDynamicCover.widgets.picture import Picture
 
 from VkDynamicCover.utils import vk_tools, draw, time, widgets
-from VkDynamicCover.widgets.random_picture import RandomPicture
 
 
 class PeriodInfo():

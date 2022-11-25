@@ -6,20 +6,18 @@ import typing
 
 
 class Text(Widget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        self._text = ""
-
-        self._font_name = None
-        self._font_size = 0
-
-        self._fill = None
-        self._anchor = None
-        self._spacing = 4
-        self._direction = None
-        self._stroke_width = 0
-        self._stroke_fill = None
+        self.text = kwargs.get("text")
+        self.font_name = kwargs.get("font_name")
+        self.font_size = kwargs.get("font_size")
+        self.fill = kwargs.get("fill")
+        self.anchor = kwargs.get("anchor")
+        self.spacing = kwargs.get("spacing")
+        self.direction = kwargs.get("direction")
+        self.stroke_width = kwargs.get("stroke_width")
+        self.stroke_fill = kwargs.get("stroke_fill")
 
     def draw(self, surface):
         text = self.get_text()
@@ -106,8 +104,8 @@ class Text(Widget):
 
 
 class FormattingText(Text):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._formatter = None
 
     def get_text(self) -> str:
@@ -125,60 +123,63 @@ class FormattingText(Text):
 
 
 class LimitedText(FormattingText):
-    def __init__(self):
-        super().__init__()
-        self._max = None
-        self._action = LIMITED_ACTION.NONE
-        self._end = ""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.limit = kwargs.get("limit")
+        self.limit_action = kwargs.get("limit_action")
+        self.limit_str = kwargs.get("limit_str")
 
     def get_text(self) -> str:
         return self._get_formatted_text(super().get_text())
 
     def _get_formatted_text(self, text):
-        if not self.max or len(text) <= self.max:
+        if not self.limit or len(text) <= self.limit:
             return text
 
         res_text = ""
         lines = text.split("\n")
         for line in lines:
-            if len(line) > self.max:
-                if self.action == LIMITED_ACTION.DELETE:
-                    line = line[:self.max] + self.end
-                elif self.action == LIMITED_ACTION.NEWLINE:
-                    line = line[:self.max-1] + self.end + "\n" + \
-                           self._get_formatted_text(line[self.max:])
+            if len(line) > self.limit:
+                if self.limit_action == LIMITED_ACTION.DELETE:
+                    line = line[:self.limit] + self.limit_str
+                elif self.limit_action == LIMITED_ACTION.NEWLINE:
+                    line = line[:self.limit - 1] + self.limit_str + "\n" + \
+                           self._get_formatted_text(line[self.limit:])
             res_text += line + "\n"
 
         return res_text[:-1]
 
     @property
-    def max(self) -> int:
-        return self._max
+    def limit(self) -> int:
+        return self._limit
 
-    @max.setter
-    def max(self, max: int):
-        self._max = max
-
-    @property
-    def action(self) -> str:
-        return self._action
-
-    @action.setter
-    def action(self, action: str):
-        self._action = action
+    @limit.setter
+    def limit(self, limit: int):
+        self._limit = limit
 
     @property
-    def end(self) -> str:
-        return self._end
+    def limit_action(self) -> str:
+        return self._limit_action
 
-    @end.setter
-    def end(self, end: str):
-        self._end = end
+    @limit_action.setter
+    def limit_action(self, action: str):
+        self._limit_action = action
+
+    @property
+    def limit_str(self) -> str:
+        return self._limit_str
+
+    @limit_str.setter
+    def limit_str(self, end: str):
+        self._limit_str = end
 
 
 class SpacedText(FormattingText):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def draw(self, surface):
+        pass
 
     def get_text(self) -> str:
         pass

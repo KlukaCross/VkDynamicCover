@@ -4,12 +4,12 @@ from VkDynamicCover.types import Coordinates
 
 
 class Widget:
-    def __init__(self):
-        self.group_id = 0
+    def __init__(self, **kwargs):
+        self.group_id = kwargs.get("group_id")
 
-        self._type = None
-        self._name = None
-        self._xy = None
+        self.type = kwargs.get("type")
+        self.name = kwargs.get("name")
+        self.xy = kwargs.get("xy")
 
     def draw(self, surface: Image) -> Image:
         return surface

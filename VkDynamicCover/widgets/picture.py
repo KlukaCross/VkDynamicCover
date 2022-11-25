@@ -14,9 +14,9 @@ from abc import abstractmethod, ABC
 
 
 class Picture(Widget):
-    def __init__(self):
-        super().__init__()
-        self.resize = Interval(0, 0)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.resize = kwargs.get("resize")
 
     def draw(self, surface):
         img = self.get_image()
@@ -45,9 +45,9 @@ class Picture(Widget):
 
 
 class LocalPicture(Picture):
-    def __init__(self):
-        super().__init__()
-        self._path = None
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._path = kwargs.get("path")
 
     @property
     def path(self):
@@ -63,9 +63,9 @@ class LocalPicture(Picture):
 
 
 class UrlPicture(Picture):
-    def __init__(self):
-        super().__init__()
-        self._url = None
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._url = kwargs.get("url")
 
     @property
     def url(self):
@@ -80,37 +80,45 @@ class UrlPicture(Picture):
 
 
 class RandomPicture(Picture, ABC):
-    def __init__(self):
-        super().__init__()
-        self.random_function = lambda count: random.randint(0, count-1)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.random_formula = kwargs.get("random_formula")
+        self._random_function = None
+        self.set_random_function()
 
     @property
-    def random_function(self) -> typing.Callable:
-        return self._random_function
+    def random_formula(self) -> str:
+        return self._random_formula
 
-    @random_function.setter
-    def random_function(self, random_function):
-        self._random_function = random_function
+    @random_formula.setter
+    def random_formula(self, random_formula: str):
+        self._random_formula = random_formula
+
+    def set_random_function(self):
+        if not self.random_formula:
+            self._random_function = lambda count: random.randint(0, count - 1)
+        else:
+            pass
 
 
 class RandomLocalPicture(RandomPicture, LocalPicture):
     def get_image(self):
-        return draw.get_random_image_from_dir(path=Path(self.path), rand_func=self.random_function)
+        return draw.get_random_image_from_dir(path=Path(self.path), rand_func=self._random_function)
 
 
 class RandomAlbumPicture(RandomPicture, UrlPicture):
     def get_image(self):
-        url = VkTools.get_random_image_url(group_id=self.group_id, album_id=self.url, rand_func=self.random_function)
+        url = VkTools.get_random_image_url(group_id=self.group_id, album_id=self.url, rand_func=self._random_function)
         return draw.get_image_from_url(url)
 
 
 class VkAvatar(Picture):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        self._crop_type = None
-        self._user_id = None
-        self._default_url = None
+        self.crop_type = kwargs.get("crop_Type")
+        self.user_id = kwargs.get("user_id")
+        self.default_url = kwargs.get("default_url")
 
     @property
     def user_id(self) -> int:

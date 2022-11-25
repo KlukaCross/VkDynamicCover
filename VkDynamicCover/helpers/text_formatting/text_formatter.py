@@ -2,7 +2,7 @@ import typing
 
 
 class FormatterFunction:
-    def __init__(self, function: typing.Callable[[any], str], *args, **kwargs):
+    def __init__(self, function: typing.Callable[[any], typing.Dict[str, any]], *args, **kwargs):
         self._function = function
         self._args = args
         self._kwargs = kwargs
@@ -12,8 +12,8 @@ class FormatterFunction:
 
 
 class TextFormatter:
-    def __init__(self, format_dict: typing.Dict[str, FormatterFunction]):
-        self._format_dict = format_dict
+    def __init__(self, function: FormatterFunction):
+        self._function = function
 
     def get_format_text(self) -> str:
         raise NotImplementedError
