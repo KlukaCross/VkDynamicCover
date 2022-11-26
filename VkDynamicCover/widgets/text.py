@@ -1,6 +1,6 @@
 from VkDynamicCover.widgets.widget import Widget
 from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter
-from VkDynamicCover.utils import draw
+from VkDynamicCover.utils import DrawTools
 from VkDynamicCover.types import LIMITED_ACTION
 import typing
 
@@ -21,7 +21,7 @@ class Text(Widget):
 
     def draw(self, surface):
         text = self.get_text()
-        draw.draw_text(surface=surface, text=text, font_name=self.font_name, font_size=self.font_size,
+        DrawTools.draw_text(surface=surface, text=text, font_name=self.font_name, font_size=self.font_size,
                        fill=self.fill, xy=self.xy, anchor=self.anchor, spacing=self.spacing,
                        direction=self.direction, stroke_width=self.stroke_width,
                        stroke_fill=self.stroke_fill)

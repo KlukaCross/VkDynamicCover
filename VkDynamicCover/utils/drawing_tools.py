@@ -87,4 +87,4 @@ class DrawingTools:
         return DrawingTools.get_image_from_path(rand_pic_path)
 
 
-draw = DrawingTools()
+DrawTools = DrawingTools()

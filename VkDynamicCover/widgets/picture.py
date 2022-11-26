@@ -5,7 +5,7 @@ from copy import copy
 from PIL import Image
 
 from .widget import Widget
-from ..utils import draw
+from ..utils import DrawTools
 from pathlib import Path
 from VkDynamicCover.types import Interval
 from VkDynamicCover.utils import VkTools
@@ -23,7 +23,7 @@ class Picture(Widget):
         if not img:
             return surface
         img = self._get_resized_image(img)
-        return draw.draw_image(surface=surface, img=img, shift=self._get_shift())
+        return DrawTools.draw_image(surface=surface, img=img, shift=self._get_shift())
 
     @property
     def resize(self):
@@ -38,7 +38,7 @@ class Picture(Widget):
         raise NotImplementedError
 
     def _get_resized_image(self, image: Image):
-        return draw.get_resized_image(image, self.resize) if self.resize else image
+        return DrawTools.get_resized_image(image, self.resize) if self.resize else image
 
     def _get_shift(self) -> (int, int):
         return copy(self.xy)
@@ -59,7 +59,7 @@ class LocalPicture(Picture):
 
     def get_image(self) -> Image:
         p = Path(self.path)
-        return draw.get_image_from_path(p)
+        return DrawTools.get_image_from_path(p)
 
 
 class UrlPicture(Picture):
@@ -76,7 +76,7 @@ class UrlPicture(Picture):
         self._url = url
 
     def get_image(self) -> Image:
-        return draw.get_image_from_url(self.url)
+        return DrawTools.get_image_from_url(self.url)
 
 
 class RandomPicture(Picture, ABC):
@@ -103,13 +103,13 @@ class RandomPicture(Picture, ABC):
 
 class RandomLocalPicture(RandomPicture, LocalPicture):
     def get_image(self):
-        return draw.get_random_image_from_dir(path=Path(self.path), rand_func=self._random_function)
+        return DrawTools.get_random_image_from_dir(path=Path(self.path), rand_func=self._random_function)
 
 
 class RandomAlbumPicture(RandomPicture, UrlPicture):
     def get_image(self):
         url = VkTools.get_random_image_url(group_id=self.group_id, album_id=self.url, rand_func=self._random_function)
-        return draw.get_image_from_url(url)
+        return DrawTools.get_image_from_url(url)
 
 
 class VkAvatar(Picture):
@@ -148,7 +148,7 @@ class VkAvatar(Picture):
         user = VkTools.get_user(user_id=self.user_id, fields="crop_photo")
 
         if "crop_photo" not in user:
-            return draw.get_image_from_url(self.default_url)
+            return DrawTools.get_image_from_url(self.default_url)
 
         sizes = user["crop_photo"]["photo"]["sizes"]
         photo_max = 0
@@ -156,7 +156,7 @@ class VkAvatar(Picture):
             if sizes[i]["width"] > sizes[photo_max]["width"]:
                 photo_max = i
 
-        photo = draw.get_image_from_url(sizes[photo_max]["url"])
+        photo = DrawTools.get_image_from_url(sizes[photo_max]["url"])
 
         if self.crop_type in ["crop", "small"]:
             photo = photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,

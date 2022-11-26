@@ -1,1 +1,0 @@
-from .cover_drawing import *

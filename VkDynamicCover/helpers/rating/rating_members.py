@@ -11,5 +11,8 @@ class RatingMembers:
             return False
         self._rating[member_id] = MemberInfo(member_id=member_id)
 
+    def get_member(self, member_id: int) -> MemberInfo or None:
+        return self._rating.get(member_id)
+
     def get_all(self) -> typing.List[MemberInfo]:
         return list(self._rating.values())

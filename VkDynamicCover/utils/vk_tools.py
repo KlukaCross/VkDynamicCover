@@ -64,11 +64,17 @@ class _VkTools(metaclass=MetaSingleton):
                                 interval=interval, intervals_count=intervals_count, extended=extended)
         return req
 
-    def get_post(self, group_id: int, post_id: int):
+    def get_post(self, group_id: int, post_id: int) -> dict or None:
         vk_meth = self._vk_session.get_api()
         posts = vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])
         if len(posts):
             return posts[0]
+
+    def get_post_time(self, group_id: int, post_id: int) -> int:
+        post = self.get_post(group_id, post_id)
+        if post:
+            return post["date"]
+        return 0
 
     def get_posts_from_date(self, group_id: int, from_date_unixtime: int):
         vk_meth = self._vk_session.get_api()
@@ -138,15 +144,8 @@ class _VkTools(metaclass=MetaSingleton):
         vk_meth = self._vk_session.get_api()
         return vk_meth.groups.getMembers(group_id=-group_id, sort=sort, count=count)["items"]
 
-    @logger.catch(reraise=False)
-    def longpoll_listener(self, group_id: int, callback, **kwargs: dict):
-        longpoll = VkBotLongPoll(self._vk_session, group_id=-group_id)
-        while True:
-            try:
-                for event in longpoll.listen():
-                    callback(event=event, **kwargs)
-            except requests.exceptions.ReadTimeout as e:
-                logger.warning(f"Время ожидания ответа истекло.\n{e}")
+    def get_longpoll(self, group_id: int) -> VkBotLongPoll:
+        return VkBotLongPoll(self._vk_session, group_id=-group_id)
 
 
 VkTools = _VkTools()
