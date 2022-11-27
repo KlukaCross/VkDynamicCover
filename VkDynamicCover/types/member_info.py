@@ -13,6 +13,17 @@ class MemberInfo:
         self.released_posts: typing.List[int] = []
         self.donates: int = 0
 
+    def get_easy_info(self) -> "EasyMemberInfo":
+        res = EasyMemberInfo()
+        res.member_id = self.member_id
+        res.post_likes = len(self.like_posts)
+        res.comment_likes = len(self.like_comments)
+        res.post_comments = len(self.comment_posts)
+        res.reposts = len(self.repost_posts)
+        res.posts = len(self.released_posts)
+        res.donates = self.donates
+        return res
+
 
 class EasyMemberInfo:
     def __init__(self):

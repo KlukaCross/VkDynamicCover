@@ -5,6 +5,7 @@ from loguru import logger
 from vk_api.bot_longpoll import VkBotEventType
 
 from VkDynamicCover.helpers.rating.rating_members import RatingMembers
+from VkDynamicCover.helpers.text_formatting import TextCalculator, FormatterFunction
 from VkDynamicCover.types import MetaSingleton, MemberInfo
 from VkDynamicCover.listeners import Subscriber
 import typing
@@ -25,6 +26,8 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
         self._ratings: typing.Dict[Interval, RatingMembers] = {}
         self._last_subscriber_ids: typing.List[int] = []
         self._max_last_subs: int = 0
+
+        self._formatter_function = FormatterFunction(self.get_formula_member_info)
 
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(
@@ -104,8 +107,10 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
             rating_info.points[member_info.member_id] = self._calc_points(point_formula=rating_info.point_formula,
                                                                           member_info=member_info)
 
-    def _calc_points(self, member_info: MemberInfo, point_formula) -> EasyMemberInfo:
-        return EasyMemberInfo()
+    def _calc_points(self, member_info: MemberInfo, point_formula: str) -> EasyMemberInfo:
+        res = member_info.get_easy_info()
+        res.points = TextCalculator(self._formatter_function).get_format_text(text=point_formula, member_info=member_info)
+        return res
 
     def add_rating(self, rating_info: RatingInfo):
         interval = TimeTools.get_period_interval(rating_info.period)
@@ -219,3 +224,13 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
 
     def add_track_last_subscribers(self, max_subs: int):
         self._max_last_subs = max(self._max_last_subs, max_subs)
+
+    @staticmethod
+    def get_formula_member_info(member_info: MemberInfo) -> typing.Dict[str, any]:
+        return {
+            "likes": len(member_info.like_posts),
+            "comments": len(member_info.comment_posts),
+            "reposts": len(member_info.repost_posts),
+            "posts": len(member_info.released_posts),
+            "donates": member_info.donates
+        }

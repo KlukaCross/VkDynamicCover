@@ -4,5 +4,5 @@ import re
 
 
 class TextInserter(TextFormatter):
-    def get_format_text(self, text: str) -> str:
-        return text.format_map(self.function())
+    def get_format_text(self, text: str, *args, **kwargs) -> str:
+        return text.format_map(self.function(*args, **kwargs))

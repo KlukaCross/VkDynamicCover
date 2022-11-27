@@ -8,12 +8,14 @@ class FormatterFunction:
         self._kwargs = kwargs
 
     def __call__(self, *args, **kwargs) -> typing.Dict[str, any]:
-        return self._function(*self._args, **self._kwargs)
+        args += self._args
+        kwargs.update(self._kwargs)
+        return self._function(*args, **kwargs)
 
 
 class TextFormatter:
     def __init__(self, function: FormatterFunction):
         self.function = function
 
-    def get_format_text(self, text) -> str:
+    def get_format_text(self, text, *args, **kwargs) -> str:
         raise NotImplementedError
