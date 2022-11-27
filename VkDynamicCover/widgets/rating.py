@@ -1,15 +1,14 @@
-import datetime
 import typing
 from functools import reduce
 
 from VkDynamicCover.widgets.profile import Profile, UserInfo
-from loguru import logger
 
 from .text import FormattingText
 from .widget import Widget
-from ..helpers.text_formatting.text_formatter import TextFormatter, FormatterFunction
-from ..types.member_info import EasyMemberInfo
-from ..types.rating_info import RatingInfo
+from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter, FormatterFunction
+from VkDynamicCover.types.member_info import EasyMemberInfo
+from VkDynamicCover.types.rating_info import RatingInfo
+from VkDynamicCover.types import exceptions
 
 
 class Rating(Widget):
@@ -33,6 +32,8 @@ class Rating(Widget):
 
     @places.setter
     def places(self, places: typing.List["RatingPlace"]):
+        if places and not isinstance(places, list):
+            raise exceptions.CreateTypeException(f"places must be list, not {type(places)}")
         self._places = places
 
     @property
@@ -41,6 +42,8 @@ class Rating(Widget):
 
     @rating_info.setter
     def rating_info(self, rating_info: RatingInfo):
+        if rating_info and not isinstance(rating_info, RatingInfo):
+            raise exceptions.CreateTypeException(f"rating_info must be RatingInfo, not {type(rating_info)}")
         self._rating_info = rating_info
 
 
@@ -66,7 +69,7 @@ class RatingPlace(Widget):
     @text.setter
     def text(self, text):
         if text and not isinstance(text, RatingPlaceInfo):
-            raise ValueError
+            raise exceptions.CreateTypeException(f"text must be RatingPlaceInfo, not {type(text)}")
         self._text = text
 
     @property
@@ -76,7 +79,7 @@ class RatingPlace(Widget):
     @profile.setter
     def profile(self, profile: Profile):
         if profile and not isinstance(profile, Profile):
-            raise ValueError
+            raise exceptions.CreateTypeException(f"profile must be Profile, not {type(profile)}")
         self._profile = profile
 
 
@@ -97,31 +100,3 @@ class RatingPlaceInfo(FormattingText):
             "donates": self.easy_member_info.donates
         })
         return dct
-
-"""
-class PeriodInfo():
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
-
-        self.text_from = kwargs.get("date_from", "{day_z}.{month_z}.{year}")
-        self.text_to = kwargs.get("date_to", "{day_z}.{month_z}.{year}")
-
-        self.shift = kwargs.get("shift", {})
-        self.shift.setdefault("year", 0)
-        self.shift.setdefault("month", 0)
-        self.shift.setdefault("week", 0)
-        self.shift.setdefault("day", 0)
-        self.shift.setdefault("hour", 0)
-        self.shift.setdefault("minute", 0)
-        self.shift.setdefault("second", 0)
-
-        self.time_from = self.time_to = datetime.datetime.now()
-
-    def get_format_text(self, text) -> str:
-        return text.format(date_from=time.format_time(self.time_from, self.text_from),
-                           date_to=time.format_time(self.time_to, self.text_to))
-
-    def set_period(self, time_from: datetime.datetime, time_to: datetime.datetime):
-        self.time_from = time.shift_time(time_from, self.shift)
-        self.time_to = time.shift_time(time_to, self.shift)
-"""

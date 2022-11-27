@@ -4,8 +4,9 @@ from VkDynamicCover.widgets.text import Text, FormattingText
 from VkDynamicCover.widgets.widget import Widget
 from VkDynamicCover.widgets.picture import Picture
 from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter, FormatterFunction
+from VkDynamicCover.types import exceptions
 
-from VkDynamicCover.utils import widgets, vk_tools, VkTools
+from VkDynamicCover.utils import VkTools
 
 
 class Profile(Widget):
@@ -29,6 +30,8 @@ class Profile(Widget):
 
     @info.setter
     def info(self, info: Text):
+        if info and not isinstance(info, Text):
+            raise exceptions.CreateTypeException(f"info must be Text, not {type(info)}")
         self._info = info
 
     @property
@@ -37,6 +40,8 @@ class Profile(Widget):
 
     @avatar.setter
     def avatar(self, avatar: Picture):
+        if avatar and not isinstance(avatar, Picture):
+            raise exceptions.CreateTypeException(f"avatar must be Picture, not {type(avatar)}")
         self._avatar = avatar
 
 
@@ -57,4 +62,6 @@ class UserInfo(FormattingText):
 
     @user_id.setter
     def user_id(self, user_id: int):
+        if user_id and not isinstance(user_id, int):
+            raise exceptions.CreateTypeException(f"user_id must be int, not {type(user_id)}")
         self._user_id = user_id

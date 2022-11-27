@@ -1,13 +1,12 @@
 import random
-import typing
 from copy import copy
 
 from PIL import Image
 
 from .widget import Widget
-from ..utils import DrawTools
+from VkDynamicCover.utils import DrawTools
 from pathlib import Path
-from VkDynamicCover.types import Interval
+from VkDynamicCover.types import Interval, exceptions
 from VkDynamicCover.utils import VkTools
 
 from abc import abstractmethod, ABC
@@ -31,6 +30,8 @@ class Picture(Widget):
 
     @resize.setter
     def resize(self, interval: Interval):
+        if interval and not isinstance(interval, Interval):
+            raise exceptions.CreateTypeException(f"interval must be Interval, not {type(interval)}")
         self._resize = interval
 
     @abstractmethod
@@ -55,6 +56,8 @@ class LocalPicture(Picture):
 
     @path.setter
     def path(self, path: str):
+        if path and not isinstance(path, str):
+            raise exceptions.CreateTypeException(f"path must be str, not {type(path)}")
         self._path = path
 
     def get_image(self) -> Image:
@@ -73,6 +76,8 @@ class UrlPicture(Picture):
 
     @url.setter
     def url(self, url: str):
+        if url and not isinstance(url, str):
+            raise exceptions.CreateTypeException(f"url must be str, not {type(url)}")
         self._url = url
 
     def get_image(self) -> Image:
@@ -92,6 +97,8 @@ class RandomPicture(Picture, ABC):
 
     @random_formula.setter
     def random_formula(self, random_formula: str):
+        if random_formula and not isinstance(random_formula, str):
+            raise exceptions.CreateTypeException(f"random_formula must be str, not {type(random_formula)}")
         self._random_formula = random_formula
 
     def set_random_function(self):
@@ -126,6 +133,8 @@ class VkAvatar(Picture):
 
     @user_id.setter
     def user_id(self, user_id: int):
+        if user_id and not isinstance(user_id, int):
+            raise exceptions.CreateTypeException(f"user_id must be int, not {type(user_id)}")
         self._user_id = user_id
 
     @property
@@ -134,6 +143,8 @@ class VkAvatar(Picture):
 
     @crop_type.setter
     def crop_type(self, crop_type: str):
+        if crop_type and not isinstance(crop_type, str):
+            raise exceptions.CreateTypeException(f"crop_type must be str, not {type(crop_type)}")
         self._crop_type = crop_type
 
     @property
@@ -142,6 +153,8 @@ class VkAvatar(Picture):
 
     @default_url.setter
     def default_url(self, url: str):
+        if url and not isinstance(url, str):
+            raise exceptions.CreateTypeException(f"url must be str, not {type(url)}")
         self._default_url = url
 
     def get_image(self) -> Image:

@@ -1,8 +1,12 @@
 import datetime
 
+import typing
+
 from .text import Text
 from .widget import Widget
-from ..utils import time
+from VkDynamicCover.utils import TimeTools
+from VkDynamicCover.types import exceptions
+from ..helpers.text_formatting import FormatterFunction, TextInserter
 
 
 class Date(Widget):
@@ -19,10 +23,11 @@ class Date(Widget):
         self.shift.setdefault("minute", 0)
         self.shift.setdefault("second", 0)
 
-    def get_format_text(self, text) -> str:
+    @staticmethod
+    def get_format_text(shift) -> typing.Dict[str, str]:
         t = datetime.datetime.now()
-        t = time.shift_time(t, self.shift)
-        return time.format_time(t, text)
+        t = TimeTools.shift_time(t, shift)
+        return TimeTools.format_time(t)
 
     @property
     def text(self) -> Text:
@@ -31,8 +36,10 @@ class Date(Widget):
     @text.setter
     def text(self, text: Text):
         if text and not isinstance(text, Text):
-            raise ValueError
+            raise exceptions.CreateTypeException(f"text must be Text, not {type(text)}")
         self._text = text
+        if self._text:
+            self._text.function = TextInserter(FormatterFunction(self.get_format_text, shift=self.shift))
 
     @property
     def shift(self) -> dict:
@@ -40,6 +47,8 @@ class Date(Widget):
 
     @shift.setter
     def shift(self, shift: dict):
+        if shift and not isinstance(shift, dict):
+            raise exceptions.CreateTypeException(f"shift must be dict, not {type(shift)}")
         if not shift:
             self.shift = {}
         self._shift = shift

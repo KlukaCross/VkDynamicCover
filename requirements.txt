@@ -5,3 +5,5 @@ loguru
 setuptools
 requests
 APScheduler
+VkDynamicCover
+numexpr

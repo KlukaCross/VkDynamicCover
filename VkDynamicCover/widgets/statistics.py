@@ -4,9 +4,8 @@ from loguru import logger
 from VkDynamicCover.helpers import text_formatting as formatting
 from .text import Text
 from .widget import Widget
-from ..utils import vk_tools
 from VkDynamicCover.utils import VkTools
-
+from VkDynamicCover.types import exceptions
 
 SUPPORTED_INFO_STATS = ("members_count",)
 
@@ -53,6 +52,8 @@ class Statistics(Widget):
 
     @interval.setter
     def interval(self, interval: str):
+        if interval and not isinstance(interval, str):
+            raise exceptions.CreateTypeException(f"interval must be str, not {type(interval)}")
         self._interval = interval
 
     @property
@@ -62,5 +63,5 @@ class Statistics(Widget):
     @text.setter
     def text(self, text: Text):
         if text and not isinstance(text, Text):
-            raise ValueError
+            raise exceptions.CreateTypeException(f"text must be Text, not {type(text)}")
         self._text = text

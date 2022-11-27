@@ -1,6 +1,9 @@
 import typing
+import uuid
+
 from PIL import Image
 from VkDynamicCover.types import Coordinates
+from VkDynamicCover.types import exceptions
 
 
 class Widget:
@@ -24,7 +27,7 @@ class Widget:
     @group_id.setter
     def group_id(self, group_id: typing.Union[str, int]):
         if not group_id.isnumeric():
-            raise ValueError("group id must be numeric")
+            raise exceptions.CreateTypeException("group_id must be numeric")
         self._group_id = group_id
 
     @property
@@ -33,6 +36,8 @@ class Widget:
 
     @type.setter
     def type(self, tp: str):
+        if not isinstance(tp, str):
+            raise exceptions.CreateTypeException(f"type must be str, not {type(tp)}")
         self._type = tp
 
     @property
@@ -41,7 +46,9 @@ class Widget:
 
     @name.setter
     def name(self, name: str):
-        self._name = name
+        if name and not isinstance(name, str):
+            raise exceptions.CreateTypeException(f"name must be str, not {type(name)}")
+        self._name = name if name else uuid.uuid4()
 
     @property
     def xy(self) -> Coordinates:
@@ -50,7 +57,9 @@ class Widget:
     @xy.setter
     def xy(self, xy: typing.List[int]):
         if not isinstance(xy, list):
-            raise TypeError("xy must be list")
+            raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
+        if not xy:
+            xy = [0, 0]
         if len(xy) != 2:
-            raise ValueError("xy length must be 2")
+            raise exceptions.CreateValueException("xy length must be 2")
         self._xy = Coordinates(xy[0], xy[1])
