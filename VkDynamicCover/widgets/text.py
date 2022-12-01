@@ -4,7 +4,7 @@ from VkDynamicCover.types.spaced_types import SPACED_TYPES
 from VkDynamicCover.widgets.widget import Widget
 from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter
 from VkDynamicCover.utils import DrawTools
-from VkDynamicCover.types import LIMITED_ACTION, exceptions
+from VkDynamicCover.types import LIMITED_ACTION, exceptions, Coordinates
 import re
 import typing
 
@@ -18,6 +18,7 @@ class Text(Widget):
         super().__init__(**kwargs)
 
         self.text = kwargs.get("text")
+        self.xy = kwargs.get("xy")
         self.font_name = kwargs.get("font_name")
         self.font_size = kwargs.get("font_size")
         self.fill = kwargs.get("fill")
@@ -127,6 +128,20 @@ class Text(Widget):
         if stroke_fill and not isinstance(stroke_fill, int):
             raise exceptions.CreateTypeException(f"stroke_fill must be int, not {type(stroke_fill)}")
         self._stroke_fill = stroke_fill
+
+    @property
+    def xy(self) -> Coordinates:
+        return self._xy
+
+    @xy.setter
+    def xy(self, xy: typing.List[int]):
+        if not isinstance(xy, list):
+            raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
+        if not xy:
+            xy = [0, 0]
+        if len(xy) != 2:
+            raise exceptions.CreateValueException("xy length must be 2")
+        self._xy = Coordinates(xy[0], xy[1])
 
 
 class FormattingText(Text):

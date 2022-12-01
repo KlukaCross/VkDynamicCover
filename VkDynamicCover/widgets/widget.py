@@ -12,7 +12,6 @@ class Widget:
 
         self.type = kwargs.get("type")
         self.name = kwargs.get("name")
-        self.xy = kwargs.get("xy")
 
     def draw(self, surface: Image) -> Image:
         return surface
@@ -50,16 +49,3 @@ class Widget:
             raise exceptions.CreateTypeException(f"name must be str, not {type(name)}")
         self._name = name if name else uuid.uuid4()
 
-    @property
-    def xy(self) -> Coordinates:
-        return self._xy
-
-    @xy.setter
-    def xy(self, xy: typing.List[int]):
-        if not isinstance(xy, list):
-            raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
-        if not xy:
-            xy = [0, 0]
-        if len(xy) != 2:
-            raise exceptions.CreateValueException("xy length must be 2")
-        self._xy = Coordinates(xy[0], xy[1])

@@ -3,7 +3,7 @@ from functools import reduce
 
 from VkDynamicCover.widgets.profile import Profile, UserInfo
 
-from .text import FormattingText
+from .text import FormattingText, Text
 from .widget import Widget
 from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter, FormatterFunction
 from VkDynamicCover.types.member_info import EasyMemberInfo
@@ -15,10 +15,12 @@ class Rating(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.text = kwargs.get("Text", None)
         self.places = kwargs.get("places")
         self.rating_info = kwargs.get("rating_info")
 
     def draw(self, surface):
+        surface = self.text.draw(surface)
         sort_values = list(self.rating_info.points.values())
         sort_values.sort()
         for i in range(len(self.places)):
@@ -45,6 +47,16 @@ class Rating(Widget):
         if rating_info and not isinstance(rating_info, RatingInfo):
             raise exceptions.CreateTypeException(f"rating_info must be RatingInfo, not {type(rating_info)}")
         self._rating_info = rating_info
+
+    @property
+    def text(self) -> Text:
+        return self._text
+
+    @text.setter
+    def text(self, text: Text):
+        if text and not isinstance(text, Text):
+            raise exceptions.CreateTypeException(f"text must be Text, not {type(text)}")
+        self._text = text
 
 
 class RatingPlace(Widget):

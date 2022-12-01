@@ -1,12 +1,13 @@
 import random
 from copy import copy
 
+import typing
 from PIL import Image
 
 from .widget import Widget
 from VkDynamicCover.utils import DrawTools
 from pathlib import Path
-from VkDynamicCover.types import Interval, exceptions
+from VkDynamicCover.types import Interval, exceptions, Coordinates
 from VkDynamicCover.utils import VkTools
 
 from abc import abstractmethod, ABC
@@ -16,6 +17,7 @@ class Picture(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.resize = kwargs.get("resize")
+        self.xy = kwargs.get("xy")
 
     def draw(self, surface):
         img = self.get_image()
@@ -33,6 +35,20 @@ class Picture(Widget):
         if interval and not isinstance(interval, Interval):
             raise exceptions.CreateTypeException(f"interval must be Interval, not {type(interval)}")
         self._resize = interval
+
+    @property
+    def xy(self) -> Coordinates:
+        return self._xy
+
+    @xy.setter
+    def xy(self, xy: typing.List[int]):
+        if not isinstance(xy, list):
+            raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
+        if not xy:
+            xy = [0, 0]
+        if len(xy) != 2:
+            raise exceptions.CreateValueException("xy length must be 2")
+        self._xy = Coordinates(xy[0], xy[1])
 
     @abstractmethod
     def get_image(self) -> Image:

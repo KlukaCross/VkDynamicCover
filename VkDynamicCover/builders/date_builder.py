@@ -5,5 +5,5 @@ from VkDynamicCover.widgets.date import Date
 
 class DateBuilder(WidgetBuilder):
     def create(self, **kwargs) -> Date:
-        kwargs["text"] = TextBuilder().create(**kwargs.get("text", {}))
+        kwargs["text"] = TextBuilder().create(**kwargs)
         return Date(**kwargs)
