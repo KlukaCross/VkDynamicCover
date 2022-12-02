@@ -2,31 +2,42 @@ import time
 
 from functools import reduce
 
+from PIL.Image import Image
 from loguru import logger
 
+from .types import exceptions
 from .utils import VkTools, DrawTools, WidgetCreator
 
-COVER_WIDTH = 1590
-COVER_HEIGHT = 530
+COVER_WIDTH = 1920
+COVER_HEIGHT = 768
 
 SLEEP_SECONDS = 60
+
+VERSION_MAIN_CONFIG = "0.1"
+VERSION_COVER_CONFIG = "0.1"
 
 
 class DynamicCover:
     @logger.catch(reraise=True)
-    def __init__(self, main_config: dict, widget_config: dict):
+    def __init__(self, main_config: dict, cover_config: dict):
+
+        if main_config.get("VERSION") != VERSION_MAIN_CONFIG:
+            raise exceptions.CreateInvalidVersion("main_config")
+
+        if cover_config.get("VERSION") != VERSION_COVER_CONFIG:
+            raise exceptions.CreateInvalidVersion("widgets_config")
+
         token = main_config["token"]
         self.vk_session = VkTools.create_session(token)
-        VkTools.init(self.vk_session, main_config["app_id"])
-        self.group_id = main_config["group_id"]
-        self.surface = DrawTools.create_surface(COVER_WIDTH, COVER_HEIGHT)
+        VkTools.init(self.vk_session, main_config.get("app_id"))
 
-        show = widget_config["show"]
+        show = cover_config["show"]
         show_cycle = show if isinstance(show, list) else [show]
-        widget_list = WidgetCreator(main_config, widget_config["widgets"]).create_widgets()
-        self.widget_drawing = CoverDrawing(surface=self.surface,
-                                           widget_list=widget_list,
-                                           show_cycle_names=show_cycle)
+        widget_list = WidgetCreator(main_config, cover_config["widgets"]).create_widgets()
+        group_id = main_config["group_id"]
+        self.cover_drawing = CoverDrawing(widget_list=widget_list,
+                                          show_cycle_names=show_cycle,
+                                          group_id=group_id)
 
         sleep = main_config.get("sleep", SLEEP_SECONDS)
         self.sleep_cycle = [sleep] if isinstance(sleep, int) else sleep
@@ -34,28 +45,35 @@ class DynamicCover:
 
     def start(self):
         while True:
-            self.update()
+            self.cover_drawing.update()
             time.sleep(self.sleep_cycle[self.cur_sleep])
             self.cur_sleep = (self.cur_sleep + 1) % len(self.sleep_cycle)
 
-    @logger.catch(reraise=False)
-    def update(self):
-        self.widget_drawing.draw()
-
-        VkTools.push_cover(vk_session=self.vk_session, surface_bytes=DrawTools.get_byte_image(self.surface),
-                           surface_width=self.surface.width, surface_height=self.surface.height,
-                           group_id=self.group_id)
-        logger.info(f"Обложка успешно обновлена")
-
 
 class CoverDrawing:
-    def __init__(self, surface, widget_list, show_cycle_names):
-        self._surface = surface
+    def __init__(self, widget_list, show_cycle_names, group_id):
         self._widget_list = widget_list
         self.show_cycle = []
         self._create_show_cycle(show_cycle_names=show_cycle_names)
+        self._surface = DrawTools.create_surface(COVER_WIDTH, COVER_HEIGHT)
+        self._group_id = group_id
 
         self.cur_show = 0
+
+    @logger.catch(reraise=False)
+    def update(self):
+        self._surface = self.draw(self._surface)
+
+        VkTools.push_cover(surface_bytes=DrawTools.get_byte_image(self._surface),
+                           surface_width=self._surface.width, surface_height=self._surface.height,
+                           group_id=self._group_id)
+        logger.info(f"Обложка успешно обновлена")
+
+    def draw(self, surface: Image) -> Image:
+        DrawTools.clear(surface)
+        surface = reduce(lambda s, w: w.draw(s), self.show_cycle[self.cur_show], surface)
+        self.cur_show = (self.cur_show + 1) % len(self.show_cycle)
+        return surface
 
     def _create_show_cycle(self, show_cycle_names):
         def get_widget(name: str):
@@ -78,6 +96,3 @@ class CoverDrawing:
                     tmp_lst.append(widget)
             self.show_cycle.append(tmp_lst)
 
-    def draw(self):
-        reduce(lambda w: w.draw(self._surface), self.show_cycle[self.cur_show])
-        self.cur_show = (self.cur_show + 1) % len(self.show_cycle)

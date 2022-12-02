@@ -5,10 +5,11 @@ from VkDynamicCover.widgets.profile import Profile, UserInfo
 
 from .text import FormattingText, Text
 from .widget import Widget
-from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter, FormatterFunction
+from VkDynamicCover.helpers.text_formatting.text_formatter import FormatterFunction
 from VkDynamicCover.types.member_info import EasyMemberInfo
 from VkDynamicCover.types.rating_info import RatingInfo
 from VkDynamicCover.types import exceptions
+from ..helpers.text_formatting import TextInserter
 
 
 class Rating(Widget):
@@ -20,10 +21,12 @@ class Rating(Widget):
         self.rating_info = kwargs.get("rating_info")
 
     def draw(self, surface):
-        surface = self.text.draw(surface)
+        if self.text:
+            surface = self.text.draw(surface)
         sort_values = list(self.rating_info.points.values())
-        sort_values.sort()
-        for i in range(len(self.places)):
+        sort_values.sort(key=lambda x: x.points)
+        min_len = min(len(self.places), len(sort_values))
+        for i in range(min_len):
             self.places[i].update_member_info(sort_values[i])
         surface = reduce(lambda x, y: y.draw(x), self.places, surface)
         return surface
@@ -62,44 +65,17 @@ class Rating(Widget):
 class RatingPlace(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
+        self.easy_member_info = None
         self.profile = kwargs.get("profile")
-        self.text = kwargs.get("text")
+        self.profile.info.formatter = TextInserter(FormatterFunction(function=self.get_place_info))
 
     def draw(self, surface):
-        surface = self.profile.draw(surface)
-        surface = self.text.draw(surface)
+        if self.easy_member_info is not None:
+            surface = self.profile.draw(surface)
         return surface
 
     def update_member_info(self, member_info: EasyMemberInfo):
-        self.text.easy_member_info = member_info
-
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, text):
-        if text and not isinstance(text, RatingPlaceInfo):
-            raise exceptions.CreateTypeException(f"text must be RatingPlaceInfo, not {type(text)}")
-        self._text = text
-
-    @property
-    def profile(self) -> Profile:
-        return self._profile
-
-    @profile.setter
-    def profile(self, profile: Profile):
-        if profile and not isinstance(profile, Profile):
-            raise exceptions.CreateTypeException(f"profile must be Profile, not {type(profile)}")
-        self._profile = profile
-
-
-class RatingPlaceInfo(FormattingText):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.easy_member_info = EasyMemberInfo()
-        self.formatter = TextFormatter(FormatterFunction(function=RatingPlaceInfo.get_place_info))
+        self.easy_member_info = member_info
 
     def get_place_info(self) -> typing.Dict[str, str]:
         dct = UserInfo.get_user_info(self.easy_member_info.member_id)
@@ -112,3 +88,15 @@ class RatingPlaceInfo(FormattingText):
             "donates": self.easy_member_info.donates
         })
         return dct
+
+    @property
+    def profile(self) -> Profile:
+        return self._profile
+
+    @profile.setter
+    def profile(self, profile: Profile):
+        if profile and not isinstance(profile, Profile):
+            raise exceptions.CreateTypeException(f"profile must be Profile, not {type(profile)}")
+        self._profile = profile
+
+

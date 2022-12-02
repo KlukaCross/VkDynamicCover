@@ -50,8 +50,8 @@ class _TimeTools:
                                     minutes=shift["minute"],
                                     seconds=shift["second"])
 
-        dtime = dtime.replace(year=dtime.year + shift["year"] + math.trunc((dtime.month + shift["month"]) / 12),
-                              month=(dtime.month + shift["month"]) % 12)
+        dtime = dtime.replace(year=dtime.year + shift["year"] + math.trunc((dtime.month + shift["month"] - 1) / 12),
+                            month=(dtime.month + shift["month"] - 1) % 12 + 1)
         return dtime
 
     @staticmethod

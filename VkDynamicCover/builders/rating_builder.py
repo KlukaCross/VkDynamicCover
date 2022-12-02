@@ -1,10 +1,10 @@
-from VkDynamicCover.builders import TextBuilder
+from VkDynamicCover.builders.text_builder import TextBuilder
 from VkDynamicCover.builders.profile_builder import ProfileBuilder
 from VkDynamicCover.builders.widget_builder import WidgetBuilder
 from VkDynamicCover.helpers.rating.rating_handler import RatingHandler
 from VkDynamicCover.listeners import LongpollListener
 from VkDynamicCover.types.rating_info import RatingInfo
-from VkDynamicCover.widgets.rating import Rating, RatingPlace, RatingPlaceInfo
+from VkDynamicCover.widgets.rating import Rating, RatingPlace
 
 
 class RatingBuilder(WidgetBuilder):
@@ -27,15 +27,11 @@ class RatingBuilder(WidgetBuilder):
 
 class RatingPlaceBuilder(WidgetBuilder):
     def create(self, **kwargs) -> RatingPlace:
-        kwargs["profile"] = ProfileBuilder().create(**kwargs["profile"])
-        kwargs["text"] = RatingPlaceInfoBuilder().create(**kwargs["text"])
+        if "type" not in kwargs:
+            kwargs["type"] = "RatingPlace"
+        kwargs["profile"] = ProfileBuilder().create(**kwargs)
 
         return RatingPlace(**kwargs)
-
-
-class RatingPlaceInfoBuilder(WidgetBuilder):
-    def create(self, **kwargs) -> RatingPlaceInfo:
-        return RatingPlaceInfo(**kwargs)
 
 
 class RatingHandlerBuilder:

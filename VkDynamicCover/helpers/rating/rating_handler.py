@@ -16,10 +16,17 @@ from VkDynamicCover.types.rating_info import RatingInfo
 from VkDynamicCover.types.update_rating_events import UpdateRatingEvents
 from VkDynamicCover.utils import VkTools, TimeTools
 
-RATING_UPDATE_SECONDS = 120
+RATING_UPDATE_SECONDS = 10
 
 
-class RatingHandler(metaclass=MetaSingleton, Subscriber):
+class RatingHandler(Subscriber):
+    __HANDLERS__ = {}
+
+    def __new__(cls, group_id, *args, **kwargs):
+        if group_id not in cls.__HANDLERS__:
+            cls.__HANDLERS__[group_id] = super().__new__(cls)
+        return cls.__HANDLERS__[group_id]
+
     def __init__(self, group_id):
         self._group_id = group_id
         self._rating_info: typing.Dict[Interval, typing.List[RatingInfo]] = {}
@@ -33,10 +40,7 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
         self.scheduler.add_job(
             func=self._update_ratings,
             trigger="interval",
-            seconds=RATING_UPDATE_SECONDS,
-            kwargs={
-                "self": self
-            }
+            seconds=RATING_UPDATE_SECONDS
         )
         self.scheduler.start()
 
@@ -50,7 +54,7 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
                                                                     post_id=event.object["post_id"]))
 
         elif event.type in ("like_add", "like_remove"):
-            if event.object["object_owner_id"] != self._group_id:  # чужие посты не считаются
+            if abs(event.object["object_owner_id"]) != self._group_id:  # чужие посты не считаются
                 return
             object_type = event.object["object_type"]
             if object_type == "post":
@@ -84,7 +88,7 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
             return
 
     def _update_ratings(self):
-        for interval, rating_info_list in self._rating_info.values():
+        for interval, rating_info_list in self._rating_info.items():
             if self._is_reset_rating(interval):
                 self._reset_rating(interval)
                 continue
@@ -109,7 +113,8 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
 
     def _calc_points(self, member_info: MemberInfo, point_formula: str) -> EasyMemberInfo:
         res = member_info.get_easy_info()
-        res.points = TextCalculator(self._formatter_function).get_format_text(text=point_formula, member_info=member_info)
+        res.points = int(TextCalculator(self._formatter_function).get_format_text(text=point_formula,
+                                                                              member_info=member_info))
         return res
 
     def add_rating(self, rating_info: RatingInfo):
@@ -120,6 +125,7 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
         else:
             self._rating_info[interval].append(rating_info)
         self._init_rating(interval)
+        self._update_rating(interval, rating_info)
 
     def _init_rating(self, interval: Interval):
         logger.info("Инициализируется рейтинг...")
@@ -139,11 +145,11 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
                                 resource_unixtime=p['date'])
 
             for i in comments:
-                self._add_point(user_id=i, event=UpdateRatingEvents.ADD_COMMENTED_POST, resource=p['id'],
+                self._add_point(user_id=i["from_id"], event=UpdateRatingEvents.ADD_COMMENTED_POST, resource=p['id'],
                                 resource_unixtime=p['date'])
 
             for i in reposts:
-                self._add_point(user_id=i, event=UpdateRatingEvents.ADD_REPOSTED_POST, resource=p['id'],
+                self._add_point(user_id=i["owner_id"], event=UpdateRatingEvents.ADD_REPOSTED_POST, resource=p['id'],
                                 resource_unixtime=p['date'])
 
             self._add_point(user_id=p.get("signer_id", -1), event=UpdateRatingEvents.ADD_RELEASED_POST,
@@ -160,12 +166,14 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
         return datetime.datetime.now().timestamp() > interval.to
 
     def _add_point(self, user_id, event: UpdateRatingEvents, resource: int, resource_unixtime: int) -> bool:
-        for interval, members in self._ratings.values():
+        if user_id == -1:
+            return True
+        for interval, members in self._ratings.items():
             if resource_unixtime < interval.fr or resource_unixtime > interval.to:
                 continue
             member: MemberInfo = members.get_member(user_id)
             if not member:
-                members.add_member(user_id)
+                member = members.add(user_id)
             if event == UpdateRatingEvents.ADD_LIKED_POST:
                 member.like_posts.append(resource)
             elif event == UpdateRatingEvents.ADD_LIKED_COMMENT:
@@ -228,8 +236,8 @@ class RatingHandler(metaclass=MetaSingleton, Subscriber):
     @staticmethod
     def get_formula_member_info(member_info: MemberInfo) -> typing.Dict[str, any]:
         return {
-            "likes": len(member_info.like_posts),
-            "comments": len(member_info.comment_posts),
+            "post_likes": len(member_info.like_posts),
+            "post_comments": len(member_info.comment_posts),
             "reposts": len(member_info.repost_posts),
             "posts": len(member_info.released_posts),
             "donates": member_info.donates

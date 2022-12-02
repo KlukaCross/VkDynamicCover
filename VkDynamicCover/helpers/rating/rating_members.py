@@ -6,10 +6,12 @@ class RatingMembers:
     def __init__(self):
         self._rating: typing.Dict[int, MemberInfo] = {}
 
-    def add(self, member_id: int) -> bool:
+    def add(self, member_id: int) -> MemberInfo:
         if member_id in self._rating:
-            return False
-        self._rating[member_id] = MemberInfo(member_id=member_id)
+            return self._rating[member_id]
+        member_info = MemberInfo(member_id=member_id)
+        self._rating[member_id] = member_info
+        return member_info
 
     def get_member(self, member_id: int) -> MemberInfo or None:
         return self._rating.get(member_id)

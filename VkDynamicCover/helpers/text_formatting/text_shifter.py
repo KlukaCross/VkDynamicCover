@@ -1,4 +1,4 @@
-from text_formatter import TextFormatter
+from .text_formatter import TextFormatter
 
 
 class TextShifter(TextFormatter):

@@ -51,7 +51,7 @@ def create_parser():
 if __name__ == "__main__":
     args = create_parser().parse_args()
 
-    logs_dir = args.config.parent.absolute() / "logs"
+    logs_dir = args.main_config.parent.absolute() / "logs"
 
     if args.debug:
         logger.add(
@@ -92,6 +92,6 @@ if __name__ == "__main__":
         logger.error(e)
         sys.exit()
 
-    dynamic_cover = DynamicCover(main_config=main_config, widget_config=widget_config)
+    dynamic_cover = DynamicCover(main_config=main_config, cover_config=widget_config)
     dynamic_cover.start()
 

@@ -8,9 +8,10 @@ from VkDynamicCover.types import LIMITED_ACTION, exceptions, Coordinates
 import re
 import typing
 
-
-DEFAULT_FONT_SIZE = 10
+DEFAULT_FONT_SIZE = 40
 DEFAULT_SPACING = 4
+DEFAULT_COLOR = "black"
+DEFAULT_STROKE_WIDTH = 2
 
 
 class Text(Widget):
@@ -18,22 +19,23 @@ class Text(Widget):
         super().__init__(**kwargs)
 
         self.text = kwargs.get("text")
-        self.xy = kwargs.get("xy")
+        self.xy = kwargs.get("xy", [0, 0])
         self.font_name = kwargs.get("font_name")
-        self.font_size = kwargs.get("font_size")
-        self.fill = kwargs.get("fill")
+        self.font_size = kwargs.get("font_size", DEFAULT_FONT_SIZE)
+        self.fill = kwargs.get("fill", DEFAULT_COLOR)
         self.anchor = kwargs.get("anchor")
-        self.spacing = kwargs.get("spacing")
+        self.spacing = kwargs.get("spacing", DEFAULT_SPACING)
         self.direction = kwargs.get("direction")
-        self.stroke_width = kwargs.get("stroke_width")
+        self.stroke_width = kwargs.get("stroke_width", DEFAULT_STROKE_WIDTH)
         self.stroke_fill = kwargs.get("stroke_fill")
 
     def draw(self, surface):
         text = self.get_text()
+
         DrawTools.draw_text(surface=surface, text=text, font_name=self.font_name, font_size=self.font_size,
-                       fill=self.fill, xy=(self.xy.x, self.xy.y), anchor=self.anchor, spacing=self.spacing,
-                       direction=self.direction, stroke_width=self.stroke_width,
-                       stroke_fill=self.stroke_fill)
+                            fill=self.fill, xy=(self.xy.x, self.xy.y), anchor=self.anchor, spacing=self.spacing,
+                            direction=self.direction, stroke_width=self.stroke_width,
+                            stroke_fill=self.stroke_fill)
         return surface
 
     def get_text(self) -> str:
@@ -67,11 +69,11 @@ class Text(Widget):
     def font_size(self, font_size: int):
         if font_size and not isinstance(font_size, int):
             raise exceptions.CreateTypeException(f"font_size must be int, not {type(font_size)}")
-        self._font_size = font_size if font_size else DEFAULT_FONT_SIZE
+        self._font_size = font_size
 
     @property
     def fill(self) -> str:
-        return self._text
+        return self._fill
 
     @fill.setter
     def fill(self, fill: str):
@@ -97,7 +99,7 @@ class Text(Widget):
     def spacing(self, spacing: int):
         if spacing and not isinstance(spacing, int):
             raise exceptions.CreateTypeException(f"spacing must be int, not {type(spacing)}")
-        self._spacing = spacing if spacing else DEFAULT_SPACING
+        self._spacing = spacing
 
     @property
     def direction(self) -> str:
@@ -120,13 +122,13 @@ class Text(Widget):
         self._stroke_width = stroke_width
 
     @property
-    def stroke_fill(self) -> int:
+    def stroke_fill(self) -> str:
         return self._stroke_fill
 
     @stroke_fill.setter
-    def stroke_fill(self, stroke_fill: int):
-        if stroke_fill and not isinstance(stroke_fill, int):
-            raise exceptions.CreateTypeException(f"stroke_fill must be int, not {type(stroke_fill)}")
+    def stroke_fill(self, stroke_fill: str):
+        if stroke_fill and not isinstance(stroke_fill, str):
+            raise exceptions.CreateTypeException(f"stroke_fill must be str, not {type(stroke_fill)}")
         self._stroke_fill = stroke_fill
 
     @property
@@ -137,8 +139,6 @@ class Text(Widget):
     def xy(self, xy: typing.List[int]):
         if not isinstance(xy, list):
             raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
-        if not xy:
-            xy = [0, 0]
         if len(xy) != 2:
             raise exceptions.CreateValueException("xy length must be 2")
         self._xy = Coordinates(xy[0], xy[1])
@@ -150,7 +150,7 @@ class FormattingText(Text):
         self._formatter = None
 
     def get_text(self) -> str:
-        return self._formatter.get_format_text()
+        return self._formatter.get_format_text(self.text)
 
     @property
     def formatter(self) -> typing.Optional[TextFormatter]:
@@ -234,10 +234,12 @@ class SpacedText(FormattingText):
             if self.spaced_type == SPACED_TYPES.PRE_FORM:
                 txt = self.formatter.get_format_text(txt)
             DrawTools.draw_text(surface=surface, text=txt, font_name=self.font_name, font_size=self.font_size,
-                                fill=self.fill, xy=(self.xy.x + shift_xy[0], self.xy.y + shift_xy[1]), anchor=self.anchor,
+                                fill=self.fill, xy=(self.xy.x + shift_xy[0], self.xy.y + shift_xy[1]),
+                                anchor=self.anchor,
                                 spacing=self.spacing,
                                 direction=self.direction, stroke_width=self.stroke_width,
                                 stroke_fill=self.stroke_fill)
+
         text = self.formatter.get_format_text(self.text) if self.spaced_type == SPACED_TYPES.POST_FORM else self.text
         v_match = re.findall(r'\[vspace\(\d+\)]', text)
         h_match = re.findall(r'\[hspace\(\d+\)]', text)
@@ -252,11 +254,11 @@ class SpacedText(FormattingText):
             draw_text(text[from_ind:ind])
             if ind == v_ind:
                 v += 1
-                shift_xy[1] += len(re.match(r'\d+', v_match[v]).group(0))  # todo: добавить len_keys по y
+                shift_xy[1] += len(re.search(r'\d+', v_match[v]).group(0))
                 from_ind = ind + len(v_match[v])
             else:
                 h += 1
-                shift_xy[0] += len(re.match(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind])
+                shift_xy[0] += len(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind])
                 from_ind = ind + len(h_match[v])
 
         while v < len(v_match):
@@ -264,7 +266,7 @@ class SpacedText(FormattingText):
             ind = v_ind
             draw_text(text[from_ind:ind])
             v += 1
-            shift_xy[1] += len(re.match(r'\d+', v_match[v]).group(0))
+            shift_xy[1] += len(re.search(r'\d+', v_match[v]).group(0))
             from_ind = ind + len(v_match[v])
 
         while h < len(h_match):
@@ -272,7 +274,7 @@ class SpacedText(FormattingText):
             ind = h_ind
             draw_text(text[from_ind:ind])
             h += 1
-            shift_xy[0] += len(re.match(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind])
+            shift_xy[0] += len(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind])
             from_ind = ind + len(h_match[h])
 
     def _len_keys(self, text: str) -> int:

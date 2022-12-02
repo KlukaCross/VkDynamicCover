@@ -12,3 +12,8 @@ class CreateTypeException(CreateException):
 
 class CreateValueException(CreateException):
     pass
+
+
+class CreateInvalidVersion(CreateException):
+    def __init__(self, config_type: str):
+        super().__init__(message=f"Version of {config_type} does not match the current one")

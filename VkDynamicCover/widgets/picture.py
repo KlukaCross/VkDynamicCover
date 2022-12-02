@@ -17,7 +17,7 @@ class Picture(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.resize = kwargs.get("resize")
-        self.xy = kwargs.get("xy")
+        self.xy = kwargs.get("xy", [0, 0])
 
     def draw(self, surface):
         img = self.get_image()
@@ -44,8 +44,6 @@ class Picture(Widget):
     def xy(self, xy: typing.List[int]):
         if not isinstance(xy, list):
             raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
-        if not xy:
-            xy = [0, 0]
         if len(xy) != 2:
             raise exceptions.CreateValueException("xy length must be 2")
         self._xy = Coordinates(xy[0], xy[1])
@@ -58,7 +56,7 @@ class Picture(Widget):
         return DrawTools.get_resized_image(image, self.resize) if self.resize else image
 
     def _get_shift(self) -> (int, int):
-        return copy(self.xy)
+        return self._xy.x, self._xy.y
 
 
 class LocalPicture(Picture):

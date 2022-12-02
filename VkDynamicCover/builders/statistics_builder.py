@@ -7,6 +7,6 @@ PROPERTIES = ("interval", "group_id")
 
 class StatisticsBuilder(WidgetBuilder):
     def create(self, **kwargs) -> Statistics:
-        kwargs["text"] = TextBuilder.create(**kwargs)
+        kwargs["text"] = TextBuilder().create(**kwargs)
         widget = Statistics(**kwargs)
         return widget

@@ -1,9 +1,10 @@
 import typing
 
+from VkDynamicCover.helpers.text_formatting import TextInserter
 from VkDynamicCover.widgets.text import Text, FormattingText
 from VkDynamicCover.widgets.widget import Widget
 from VkDynamicCover.widgets.picture import Picture
-from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter, FormatterFunction
+from VkDynamicCover.helpers.text_formatting.text_formatter import FormatterFunction
 from VkDynamicCover.types import exceptions
 
 from VkDynamicCover.utils import VkTools
@@ -16,22 +17,20 @@ class Profile(Widget):
         self.avatar = kwargs.get("avatar")
 
     def draw(self, surface):
-        if not self.info:
-            return surface
-        surface = super().draw(surface)
-
+        if self.info:
+            surface = self.info.draw(surface)
         if self.avatar:
             surface = self.avatar.draw(surface)
         return surface
 
     @property
-    def info(self) -> Text:
+    def info(self) -> "UserInfo":
         return self._info
 
     @info.setter
-    def info(self, info: Text):
-        if info and not isinstance(info, Text):
-            raise exceptions.CreateTypeException(f"info must be Text, not {type(info)}")
+    def info(self, info: "UserInfo"):
+        if info and not isinstance(info, UserInfo):
+            raise exceptions.CreateTypeException(f"info must be UserInfo, not {type(info)}")
         self._info = info
 
     @property
@@ -49,7 +48,7 @@ class UserInfo(FormattingText):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.user_id = kwargs.get("user_id")
-        self.formatter = TextFormatter(FormatterFunction(UserInfo.get_user_info, user_id=self.user_id))
+        self.formatter = TextInserter(FormatterFunction(UserInfo.get_user_info, user_id=self.user_id))
 
     @staticmethod
     def get_user_info(user_id: int) -> typing.Dict[str, str]:

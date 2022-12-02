@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from subcriber import Subscriber
+from .subcriber import Subscriber
 import typing
 
 
@@ -12,7 +12,8 @@ class Listener(ABC):
         pass
 
     def subscribe(self, sub: Subscriber):
-        self._subscribers.append(sub)
+        if sub not in self._subscribers:
+            self._subscribers.append(sub)
 
     def update_all(self, event):
         for sub in self._subscribers:

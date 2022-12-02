@@ -1,7 +1,9 @@
-from listener import Listener
-from VkDynamicCover.types import MetaSingleton
+from .listener import Listener
 
 
-class DonateListener(metaclass=MetaSingleton, Listener):
+class DonateListener(Listener):
+    def __init__(self):
+        super().__init__()
+
     def listen(self):
         pass

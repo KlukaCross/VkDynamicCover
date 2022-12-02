@@ -2,7 +2,7 @@ import datetime
 
 import typing
 
-from .text import Text
+from .text import FormattingText
 from .widget import Widget
 from VkDynamicCover.utils import TimeTools
 from VkDynamicCover.types import exceptions
@@ -12,9 +12,8 @@ from ..helpers.text_formatting import FormatterFunction, TextInserter
 class Date(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.text = kwargs.get("text")
 
-        self.shift = kwargs.get("shift")
+        self.shift = kwargs.get("shift", {})
         self.shift.setdefault("year", 0)
         self.shift.setdefault("month", 0)
         self.shift.setdefault("week", 0)
@@ -23,6 +22,11 @@ class Date(Widget):
         self.shift.setdefault("minute", 0)
         self.shift.setdefault("second", 0)
 
+        self.text = kwargs.get("text")
+
+    def draw(self, surface):
+        return self.text.draw(surface)
+
     @staticmethod
     def get_format_text(shift) -> typing.Dict[str, str]:
         t = datetime.datetime.now()
@@ -30,16 +34,16 @@ class Date(Widget):
         return TimeTools.format_time(t)
 
     @property
-    def text(self) -> Text:
+    def text(self) -> FormattingText:
         return self._text
 
     @text.setter
-    def text(self, text: Text):
-        if text and not isinstance(text, Text):
-            raise exceptions.CreateTypeException(f"text must be Text, not {type(text)}")
+    def text(self, text: FormattingText):
+        if text and not isinstance(text, FormattingText):
+            raise exceptions.CreateTypeException(f"text must be FormattingText, not {type(text)}")
         self._text = text
         if self._text:
-            self._text.function = TextInserter(FormatterFunction(self.get_format_text, shift=self.shift))
+            self._text.formatter = TextInserter(FormatterFunction(self.get_format_text, shift=self.shift))
 
     @property
     def shift(self) -> dict:
@@ -49,7 +53,5 @@ class Date(Widget):
     def shift(self, shift: dict):
         if shift and not isinstance(shift, dict):
             raise exceptions.CreateTypeException(f"shift must be dict, not {type(shift)}")
-        if not shift:
-            self.shift = {}
         self._shift = shift
 

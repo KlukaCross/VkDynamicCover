@@ -14,6 +14,11 @@ class DrawingTools:
         return Image.new("RGBA", (width, height))
 
     @staticmethod
+    def clear(surface: Image):
+        draw = ImageDraw.Draw(surface)
+        draw.rectangle([(0, 0), surface.size], fill="white")
+
+    @staticmethod
     def draw_image(surface: Image, img: Image, shift: (int, int) = (0, 0)) -> Image:
         surf_buf = Image.new("RGBA", surface.size)
         surf_buf.paste(img, shift)
@@ -21,7 +26,7 @@ class DrawingTools:
 
     @staticmethod
     def draw_text(surface: Image,
-                  text: str,
+                  text: str = None,
                   font_name: str = None, font_size: int = 10,
                   fill: str = None,
                   xy: (int, int) = (0, 0),

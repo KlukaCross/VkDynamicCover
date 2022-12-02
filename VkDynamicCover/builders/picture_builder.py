@@ -5,6 +5,8 @@ from VkDynamicCover.widgets.picture import Picture, RandomLocalPicture, RandomAl
 
 class PictureBuilder(WidgetBuilder):
     def create(self, **kwargs) -> Picture:
+        if "type" not in kwargs:
+            kwargs["type"] = "Picture"
         if "path" in kwargs:
             if "random_function" in kwargs:
                 return RandomLocalPicture(**kwargs)

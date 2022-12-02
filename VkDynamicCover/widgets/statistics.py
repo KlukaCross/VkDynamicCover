@@ -2,7 +2,7 @@ import typing
 from loguru import logger
 
 from VkDynamicCover.helpers import text_formatting as formatting
-from .text import Text
+from .text import FormattingText
 from .widget import Widget
 from VkDynamicCover.utils import VkTools
 from VkDynamicCover.types import exceptions
@@ -21,11 +21,15 @@ class Statistics(Widget):
         super().__init__(**kwargs)
         self.text = kwargs.get("text")
         self.interval = kwargs.get("interval")
-        self.formatter = formatting.TextInserter(
+        self.group_id = kwargs.get("group_id")
+        self.text.formatter = formatting.TextInserter(
             function=formatting.FormatterFunction(Statistics.get_full_info,
                                                   group_id=self.group_id,
                                                   interval=self.interval)
         )
+
+    def draw(self, surface):
+        return self.text.draw(surface)
 
     @staticmethod
     def get_full_info(group_id: int, interval: str) -> typing.Dict[str, str]:
@@ -57,11 +61,21 @@ class Statistics(Widget):
         self._interval = interval
 
     @property
-    def text(self) -> Text:
+    def text(self) -> FormattingText:
         return self._text
 
     @text.setter
-    def text(self, text: Text):
-        if text and not isinstance(text, Text):
-            raise exceptions.CreateTypeException(f"text must be Text, not {type(text)}")
+    def text(self, text: FormattingText):
+        if text and not isinstance(text, FormattingText):
+            raise exceptions.CreateTypeException(f"text must be FormattingText, not {type(text)}")
         self._text = text
+
+    @property
+    def group_id(self) -> int:
+        return self._group_id
+
+    @group_id.setter
+    def group_id(self, group_id: int):
+        if not isinstance(group_id, int):
+            raise exceptions.CreateTypeException("group_id must be int")
+        self._group_id = group_id

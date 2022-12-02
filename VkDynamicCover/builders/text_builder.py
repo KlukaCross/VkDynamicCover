@@ -1,4 +1,5 @@
 import typing
+import re
 
 from VkDynamicCover.builders.widget_builder import WidgetBuilder
 from VkDynamicCover.widgets.text import Text, LimitedText, SpacedText, FormattingText
@@ -26,12 +27,12 @@ class TextBuilder(WidgetBuilder):
         return widget(**kwargs)
 
     def _is_formatting_text(self, **kwargs) -> bool:
-        pass
+        return re.search(r'\{.*}', kwargs.get("text", "")) is not None
 
     def _is_spaced_text(self, **kwargs) -> bool:
-        pass
+        return re.search(r'\[.space\(\d+\)]', kwargs.get("text", "")) is not None
 
     def _is_limited_text(self, **kwargs) -> bool:
-        pass
+        return "limit" in kwargs
 
 
