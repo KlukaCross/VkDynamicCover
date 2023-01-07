@@ -57,7 +57,7 @@ class Statistics(Widget):
     @interval.setter
     def interval(self, interval: str):
         if interval and not isinstance(interval, str):
-            raise exceptions.CreateTypeException(f"interval must be str, not {type(interval)}")
+            raise exceptions.CreateTypeException("interval", str, type(interval))
         self._interval = interval
 
     @property
@@ -67,7 +67,7 @@ class Statistics(Widget):
     @text.setter
     def text(self, text: FormattingText):
         if text and not isinstance(text, FormattingText):
-            raise exceptions.CreateTypeException(f"text must be FormattingText, not {type(text)}")
+            raise exceptions.CreateTypeException("text", FormattingText, type(text))
         self._text = text
 
     @property
@@ -77,5 +77,5 @@ class Statistics(Widget):
     @group_id.setter
     def group_id(self, group_id: int):
         if not isinstance(group_id, int):
-            raise exceptions.CreateTypeException("group_id must be int")
+            raise exceptions.CreateTypeException("group_id", int, type(group_id))
         self._group_id = group_id

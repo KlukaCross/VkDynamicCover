@@ -12,7 +12,7 @@ _LIMIT_PROPERTIES = ("limit", "limit_action", "limit_str")
 
 class TextBuilder(WidgetBuilder):
     def create(self, **kwargs) -> Text:
-        if not self._is_formatting_text(**kwargs):
+        if not self._is_formatting_text(**kwargs) and not self._is_spaced_text(**kwargs):
             widget = Text
         elif self._is_spaced_text(**kwargs) and self._is_limited_text(**kwargs):
             logger.warning("Collision of spaced text and limited text")

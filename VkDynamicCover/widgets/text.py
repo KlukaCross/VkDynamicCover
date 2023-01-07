@@ -48,7 +48,7 @@ class Text(Widget):
     @text.setter
     def text(self, text: str):
         if text and not isinstance(text, str):
-            raise exceptions.CreateTypeException(f"text must be str, not {type(text)}")
+            raise exceptions.CreateTypeException("text", str, type(text))
         self._text = text if text else ""
 
     @property
@@ -58,7 +58,7 @@ class Text(Widget):
     @font_name.setter
     def font_name(self, font_name: str):
         if font_name and not isinstance(font_name, str):
-            raise exceptions.CreateTypeException(f"font_name must be str, not {type(font_name)}")
+            raise exceptions.CreateTypeException("font_name", str, type(font_name))
         self._font_name = font_name
 
     @property
@@ -68,7 +68,7 @@ class Text(Widget):
     @font_size.setter
     def font_size(self, font_size: int):
         if font_size and not isinstance(font_size, int):
-            raise exceptions.CreateTypeException(f"font_size must be int, not {type(font_size)}")
+            raise exceptions.CreateTypeException("font_size", int, type(font_size))
         self._font_size = font_size
 
     @property
@@ -78,7 +78,7 @@ class Text(Widget):
     @fill.setter
     def fill(self, fill: str):
         if fill and not isinstance(fill, str):
-            raise exceptions.CreateTypeException(f"fill must be str, not {type(fill)}")
+            raise exceptions.CreateTypeException("fill", str, type(fill))
         self._fill = fill
 
     @property
@@ -88,7 +88,7 @@ class Text(Widget):
     @anchor.setter
     def anchor(self, anchor: str):
         if anchor and not isinstance(anchor, str):
-            raise exceptions.CreateTypeException(f"anchor must be str, not {type(anchor)}")
+            raise exceptions.CreateTypeException("anchor", str, type(anchor))
         self._anchor = anchor
 
     @property
@@ -98,7 +98,7 @@ class Text(Widget):
     @spacing.setter
     def spacing(self, spacing: int):
         if spacing and not isinstance(spacing, int):
-            raise exceptions.CreateTypeException(f"spacing must be int, not {type(spacing)}")
+            raise exceptions.CreateTypeException("spacing", int, type(spacing))
         self._spacing = spacing
 
     @property
@@ -108,7 +108,7 @@ class Text(Widget):
     @direction.setter
     def direction(self, direction: str):
         if direction and not isinstance(direction, str):
-            raise exceptions.CreateTypeException(f"direction must be str, not {type(direction)}")
+            raise exceptions.CreateTypeException("direction", str, type(direction))
         self._direction = direction
 
     @property
@@ -118,7 +118,7 @@ class Text(Widget):
     @stroke_width.setter
     def stroke_width(self, stroke_width: int):
         if stroke_width and not isinstance(stroke_width, int):
-            raise exceptions.CreateTypeException(f"stroke_width must be int, not {type(stroke_width)}")
+            raise exceptions.CreateTypeException("stroke_width", int, type(stroke_width))
         self._stroke_width = stroke_width
 
     @property
@@ -128,7 +128,7 @@ class Text(Widget):
     @stroke_fill.setter
     def stroke_fill(self, stroke_fill: str):
         if stroke_fill and not isinstance(stroke_fill, str):
-            raise exceptions.CreateTypeException(f"stroke_fill must be str, not {type(stroke_fill)}")
+            raise exceptions.CreateTypeException("stroke_fill", str, type(stroke_fill))
         self._stroke_fill = stroke_fill
 
     @property
@@ -138,9 +138,9 @@ class Text(Widget):
     @xy.setter
     def xy(self, xy: typing.List[int]):
         if not isinstance(xy, list):
-            raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
+            raise exceptions.CreateTypeException("xy", list, type(xy))
         if len(xy) != 2:
-            raise exceptions.CreateValueException("xy length must be 2")
+            raise exceptions.CreateValueException("xy length", 2, len(xy))
         self._xy = Coordinates(xy[0], xy[1])
 
 
@@ -159,7 +159,7 @@ class FormattingText(Text):
     @formatter.setter
     def formatter(self, formatter: typing.Optional[TextFormatter]):
         if formatter and not isinstance(formatter, TextFormatter):
-            raise exceptions.CreateTypeException(f"formatter must be TextFormatter, not {type(formatter)}")
+            raise exceptions.CreateTypeException("formatter", TextFormatter, type(formatter))
         self._formatter = formatter
 
 
@@ -197,7 +197,7 @@ class LimitedText(FormattingText):
     @limit.setter
     def limit(self, limit: int):
         if limit and not isinstance(limit, int):
-            raise exceptions.CreateTypeException(f"limit must be int, not {type(limit)}")
+            raise exceptions.CreateTypeException(f"limit", str, type(limit))
         self._limit = limit
 
     @property
@@ -207,10 +207,10 @@ class LimitedText(FormattingText):
     @limit_action.setter
     def limit_action(self, limit_action: str):
         if limit_action and not isinstance(limit_action, str):
-            raise exceptions.CreateTypeException("limit_action must be str, not {type(spaced_type)}")
+            raise exceptions.CreateTypeException("limit_action", str, type(limit_action))
         names = [i.name.lower() for i in list(LIMITED_ACTION)]
         if limit_action not in names:
-            raise exceptions.CreateValueException(f"limit_action must be one of the {names}")
+            raise exceptions.CreateValueException("limit_action", names, limit_action)
         self._limit_action = limit_action
 
     @property
@@ -220,7 +220,7 @@ class LimitedText(FormattingText):
     @limit_str.setter
     def limit_str(self, limit_str: str):
         if limit_str and not isinstance(limit_str, str):
-            raise exceptions.CreateTypeException("limit_str must be str, not {type(spaced_type)}")
+            raise exceptions.CreateTypeException("limit_str", str, type(limit_str))
         self._limit_str = limit_str
 
 
@@ -292,8 +292,8 @@ class SpacedText(FormattingText):
     @spaced_type.setter
     def spaced_type(self, spaced_type: str):
         if spaced_type and not isinstance(spaced_type, str):
-            raise exceptions.CreateTypeException(f"spaced_type must be str, not {type(spaced_type)}")
+            raise exceptions.CreateTypeException("spaced_type", str, type(spaced_type))
         names = [i.name.lower() for i in list(SPACED_TYPES)]
         if spaced_type not in names:
-            raise exceptions.CreateValueException(f"spaced_type must be one of the {names}")
+            raise exceptions.CreateValueException(f"spaced_type", names, type(spaced_type))
         self._spaced_type = spaced_type

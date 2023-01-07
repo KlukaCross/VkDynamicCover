@@ -30,7 +30,7 @@ class Profile(Widget):
     @info.setter
     def info(self, info: "UserInfo"):
         if info and not isinstance(info, UserInfo):
-            raise exceptions.CreateTypeException(f"info must be UserInfo, not {type(info)}")
+            raise exceptions.CreateTypeException("info", UserInfo, type(info))
         self._info = info
 
     @property
@@ -40,7 +40,7 @@ class Profile(Widget):
     @avatar.setter
     def avatar(self, avatar: Picture):
         if avatar and not isinstance(avatar, Picture):
-            raise exceptions.CreateTypeException(f"avatar must be Picture, not {type(avatar)}")
+            raise exceptions.CreateTypeException("avatar", Picture, type(avatar))
         self._avatar = avatar
 
 
@@ -62,5 +62,5 @@ class UserInfo(FormattingText):
     @user_id.setter
     def user_id(self, user_id: int):
         if user_id and not isinstance(user_id, int):
-            raise exceptions.CreateTypeException(f"user_id must be int, not {type(user_id)}")
+            raise exceptions.CreateTypeException("user_id", int, type(user_id))
         self._user_id = user_id

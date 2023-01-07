@@ -38,7 +38,7 @@ class Rating(Widget):
     @places.setter
     def places(self, places: typing.List["RatingPlace"]):
         if places and not isinstance(places, list):
-            raise exceptions.CreateTypeException(f"places must be list, not {type(places)}")
+            raise exceptions.CreateTypeException("places", list, type(places))
         self._places = places
 
     @property
@@ -48,7 +48,7 @@ class Rating(Widget):
     @rating_info.setter
     def rating_info(self, rating_info: RatingInfo):
         if rating_info and not isinstance(rating_info, RatingInfo):
-            raise exceptions.CreateTypeException(f"rating_info must be RatingInfo, not {type(rating_info)}")
+            raise exceptions.CreateTypeException("rating_info", RatingInfo, type(rating_info))
         self._rating_info = rating_info
 
     @property
@@ -58,7 +58,7 @@ class Rating(Widget):
     @text.setter
     def text(self, text: Text):
         if text and not isinstance(text, Text):
-            raise exceptions.CreateTypeException(f"text must be Text, not {type(text)}")
+            raise exceptions.CreateTypeException("text", Text, type(text))
         self._text = text
 
 
@@ -96,7 +96,7 @@ class RatingPlace(Widget):
     @profile.setter
     def profile(self, profile: Profile):
         if profile and not isinstance(profile, Profile):
-            raise exceptions.CreateTypeException(f"profile must be Profile, not {type(profile)}")
+            raise exceptions.CreateTypeException("profile", Profile, type(profile))
         self._profile = profile
 
 

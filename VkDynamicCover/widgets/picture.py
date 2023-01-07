@@ -33,7 +33,7 @@ class Picture(Widget):
     @resize.setter
     def resize(self, interval: Interval):
         if interval and not isinstance(interval, Interval):
-            raise exceptions.CreateTypeException(f"interval must be Interval, not {type(interval)}")
+            raise exceptions.CreateTypeException("interval", Interval, type(interval))
         self._resize = interval
 
     @property
@@ -43,9 +43,9 @@ class Picture(Widget):
     @xy.setter
     def xy(self, xy: typing.List[int]):
         if not isinstance(xy, list):
-            raise exceptions.CreateTypeException(f"xy must be list, not {type(xy)}")
+            raise exceptions.CreateTypeException("xy", list, type(xy))
         if len(xy) != 2:
-            raise exceptions.CreateValueException("xy length must be 2")
+            raise exceptions.CreateValueException("xy length", 2, len(xy))
         self._xy = Coordinates(xy[0], xy[1])
 
     @abstractmethod
@@ -71,7 +71,7 @@ class LocalPicture(Picture):
     @path.setter
     def path(self, path: str):
         if path and not isinstance(path, str):
-            raise exceptions.CreateTypeException(f"path must be str, not {type(path)}")
+            raise exceptions.CreateTypeException("path", str, type(path))
         self._path = path
 
     def get_image(self) -> Image:
@@ -91,7 +91,7 @@ class UrlPicture(Picture):
     @url.setter
     def url(self, url: str):
         if url and not isinstance(url, str):
-            raise exceptions.CreateTypeException(f"url must be str, not {type(url)}")
+            raise exceptions.CreateTypeException(f"url", str, type(url))
         self._url = url
 
     def get_image(self) -> Image:
@@ -112,7 +112,7 @@ class RandomPicture(Picture, ABC):
     @random_formula.setter
     def random_formula(self, random_formula: str):
         if random_formula and not isinstance(random_formula, str):
-            raise exceptions.CreateTypeException(f"random_formula must be str, not {type(random_formula)}")
+            raise exceptions.CreateTypeException("random_formula", str, type(random_formula))
         self._random_formula = random_formula
 
     def set_random_function(self):
@@ -148,7 +148,7 @@ class VkAvatar(Picture):
     @user_id.setter
     def user_id(self, user_id: int):
         if user_id and not isinstance(user_id, int):
-            raise exceptions.CreateTypeException(f"user_id must be int, not {type(user_id)}")
+            raise exceptions.CreateTypeException("user_id", int, type(user_id))
         self._user_id = user_id
 
     @property
@@ -158,7 +158,7 @@ class VkAvatar(Picture):
     @crop_type.setter
     def crop_type(self, crop_type: str):
         if crop_type and not isinstance(crop_type, str):
-            raise exceptions.CreateTypeException(f"crop_type must be str, not {type(crop_type)}")
+            raise exceptions.CreateTypeException("crop_type", str, type(crop_type))
         self._crop_type = crop_type
 
     @property
@@ -168,7 +168,7 @@ class VkAvatar(Picture):
     @default_url.setter
     def default_url(self, url: str):
         if url and not isinstance(url, str):
-            raise exceptions.CreateTypeException(f"url must be str, not {type(url)}")
+            raise exceptions.CreateTypeException(f"url", str, type(url))
         self._default_url = url
 
     def get_image(self) -> Image:

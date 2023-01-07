@@ -40,7 +40,7 @@ class Date(Widget):
     @text.setter
     def text(self, text: FormattingText):
         if text and not isinstance(text, FormattingText):
-            raise exceptions.CreateTypeException(f"text must be FormattingText, not {type(text)}")
+            raise exceptions.CreateTypeException("text", FormattingText, type(text))
         self._text = text
         if self._text:
             self._text.formatter = TextInserter(FormatterFunction(self.get_format_text, shift=self.shift))
@@ -52,6 +52,6 @@ class Date(Widget):
     @shift.setter
     def shift(self, shift: dict):
         if shift and not isinstance(shift, dict):
-            raise exceptions.CreateTypeException(f"shift must be dict, not {type(shift)}")
+            raise exceptions.CreateTypeException(f"shift", dict, type(shift))
         self._shift = shift
 
