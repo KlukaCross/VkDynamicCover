@@ -15,7 +15,7 @@ pip3 install ./VkDynamicCover
 
 [Настройка файла config.json](./CONFIG_SETTINGS.md)
 
-[Примеры]()
+[Примеры](examples)
 
 ***
 ### Запуск
