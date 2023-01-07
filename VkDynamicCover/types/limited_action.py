@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class LIMITED_ACTION(Enum):
-    NONE = "None"
-    DELETE = "Delete"
-    NEWLINE = "Newline"
+    NONE = "none"
+    DELETE = "delete"
+    NEWLINE = "newline"

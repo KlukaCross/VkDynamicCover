@@ -49,6 +49,11 @@ class DrawingTools:
                       stroke_width=stroke_width, stroke_fill=stroke_fill)
 
     @staticmethod
+    def get_text_size(text: str, font_name: str, font_size: int) -> tuple:
+        font = ImageFont.truetype(font=font_name, size=font_size, encoding='UTF-8')
+        return font.getsize(text)
+
+    @staticmethod
     def get_byte_image(surface: Image) -> bytes:
         img_bytes = io.BytesIO()
         surface.save(img_bytes, format="PNG")

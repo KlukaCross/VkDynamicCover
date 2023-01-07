@@ -115,6 +115,7 @@ class RatingHandler(Subscriber):
         res = member_info.get_easy_info()
         res.points = int(TextCalculator(self._formatter_function).get_format_text(text=point_formula,
                                                                               member_info=member_info))
+
         return res
 
     def add_rating(self, rating_info: RatingInfo):
@@ -166,7 +167,7 @@ class RatingHandler(Subscriber):
         return datetime.datetime.now().timestamp() > interval.to
 
     def _add_point(self, user_id, event: UpdateRatingEvents, resource: int, resource_unixtime: int) -> bool:
-        if user_id == -1:
+        if user_id < 0:
             return True
         for interval, members in self._ratings.items():
             if resource_unixtime < interval.fr or resource_unixtime > interval.to:

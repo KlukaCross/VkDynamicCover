@@ -6,10 +6,10 @@ from VkDynamicCover.widgets.profile import Profile, UserInfo
 from .text import FormattingText, Text
 from .widget import Widget
 from VkDynamicCover.helpers.text_formatting.text_formatter import FormatterFunction
+from VkDynamicCover.helpers.text_formatting import TextInserter
 from VkDynamicCover.types.member_info import EasyMemberInfo
 from VkDynamicCover.types.rating_info import RatingInfo
 from VkDynamicCover.types import exceptions
-from ..helpers.text_formatting import TextInserter
 
 
 class Rating(Widget):
@@ -24,7 +24,7 @@ class Rating(Widget):
         if self.text:
             surface = self.text.draw(surface)
         sort_values = list(self.rating_info.points.values())
-        sort_values.sort(key=lambda x: x.points)
+        sort_values.sort(key=lambda x: -x.points)
         min_len = min(len(self.places), len(sort_values))
         for i in range(min_len):
             self.places[i].update_member_info(sort_values[i])
@@ -98,5 +98,3 @@ class RatingPlace(Widget):
         if profile and not isinstance(profile, Profile):
             raise exceptions.CreateTypeException("profile", Profile, type(profile))
         self._profile = profile
-
-

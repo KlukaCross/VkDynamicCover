@@ -150,6 +150,8 @@ class FormattingText(Text):
         self._formatter = None
 
     def get_text(self) -> str:
+        if not self.formatter:
+            return self.text
         return self._formatter.get_format_text(self.text)
 
     @property
@@ -168,7 +170,7 @@ class LimitedText(FormattingText):
         super().__init__(**kwargs)
         self.limit = kwargs.get("limit")
         self.limit_action = kwargs.get("limit_action")
-        self.limit_str = kwargs.get("limit_str")
+        self.limit_end = kwargs.get("limit_end", "")
 
     def get_text(self) -> str:
         return self._get_formatted_text(super().get_text())
@@ -179,12 +181,13 @@ class LimitedText(FormattingText):
 
         res_text = ""
         lines = text.split("\n")
+
         for line in lines:
             if len(line) > self.limit:
-                if self.limit_action == LIMITED_ACTION.DELETE:
-                    line = line[:self.limit] + self.limit_str
-                elif self.limit_action == LIMITED_ACTION.NEWLINE:
-                    line = line[:self.limit - 1] + self.limit_str + "\n" + \
+                if self.limit_action == LIMITED_ACTION.DELETE.value:
+                    line = line[:self.limit] + self.limit_end
+                elif self.limit_action == LIMITED_ACTION.NEWLINE.value:
+                    line = line[:self.limit - 1] + self.limit_end + "\n" + \
                            self._get_formatted_text(line[self.limit:])
             res_text += line + "\n"
 
@@ -208,30 +211,30 @@ class LimitedText(FormattingText):
     def limit_action(self, limit_action: str):
         if limit_action and not isinstance(limit_action, str):
             raise exceptions.CreateTypeException("limit_action", str, type(limit_action))
-        names = [i.name.lower() for i in list(LIMITED_ACTION)]
+        names = [i.value for i in list(LIMITED_ACTION)]
         if limit_action not in names:
             raise exceptions.CreateValueException("limit_action", names, limit_action)
         self._limit_action = limit_action
 
     @property
-    def limit_str(self) -> str:
+    def limit_end(self) -> str:
         return self._limit_str
 
-    @limit_str.setter
-    def limit_str(self, limit_str: str):
-        if limit_str and not isinstance(limit_str, str):
-            raise exceptions.CreateTypeException("limit_str", str, type(limit_str))
-        self._limit_str = limit_str
+    @limit_end.setter
+    def limit_end(self, limit_end: str):
+        if limit_end and not isinstance(limit_end, str):
+            raise exceptions.CreateTypeException("limit_end", str, type(limit_end))
+        self._limit_str = limit_end
 
 
 class SpacedText(FormattingText):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.spaced_type = kwargs.get("spaced_type")
+        self.space_type = kwargs.get("space_type")
 
     def draw(self, surface):
         def draw_text(txt):
-            if self.spaced_type == SPACED_TYPES.PRE_FORM:
+            if self.space_type == SPACED_TYPES.PRE_FORM:
                 txt = self.formatter.get_format_text(txt)
             DrawTools.draw_text(surface=surface, text=txt, font_name=self.font_name, font_size=self.font_size,
                                 fill=self.fill, xy=(self.xy.x + shift_xy[0], self.xy.y + shift_xy[1]),
@@ -240,60 +243,66 @@ class SpacedText(FormattingText):
                                 direction=self.direction, stroke_width=self.stroke_width,
                                 stroke_fill=self.stroke_fill)
 
-        text = self.formatter.get_format_text(self.text) if self.spaced_type == SPACED_TYPES.POST_FORM else self.text
+        text = self.formatter.get_format_text(self.text) if self.space_type == SPACED_TYPES.POST_FORM else self.text
         v_match = re.findall(r'\[vspace\(\d+\)]', text)
         h_match = re.findall(r'\[hspace\(\d+\)]', text)
         shift_xy = [0, 0]
-        ind = 0
+        ind = -1
         from_ind = 0
         v = h = 0
         while v < len(v_match) and h < len(h_match):
-            v_ind = text.find(v_match[v], __start=ind)
-            h_ind = text.find(h_match[h], __start=ind)
+            v_ind = text.find(v_match[v], ind+1)
+            h_ind = text.find(h_match[h], ind+1)
             ind = min(v_ind, h_ind)
             draw_text(text[from_ind:ind])
             if ind == v_ind:
-                v += 1
-                shift_xy[1] += len(re.search(r'\d+', v_match[v]).group(0))
+                shift_xy[1] += int(re.search(r'\d+', v_match[v]).group(0))
                 from_ind = ind + len(v_match[v])
+                v += 1
             else:
+                shift_xy[0] += int(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind]) + \
+                               DrawTools.get_text_size(text[from_ind:ind], self.font_name, self.font_size)[0]
+                from_ind = ind + len(h_match[h])
                 h += 1
-                shift_xy[0] += len(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind])
-                from_ind = ind + len(h_match[v])
 
         while v < len(v_match):
-            v_ind = text.find(v_match[v], __start=ind)
+            v_ind = text.find(v_match[v], ind+1)
             ind = v_ind
             draw_text(text[from_ind:ind])
-            v += 1
-            shift_xy[1] += len(re.search(r'\d+', v_match[v]).group(0))
+            shift_xy[1] += int(re.search(r'\d+', v_match[v]).group(0))
             from_ind = ind + len(v_match[v])
+            v += 1
 
         while h < len(h_match):
-            h_ind = text.find(h_match[h], __start=ind)
+            h_ind = text.find(h_match[h], ind+1)
             ind = h_ind
             draw_text(text[from_ind:ind])
-            h += 1
-            shift_xy[0] += len(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind])
+            shift_xy[0] += int(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind]) + \
+                               DrawTools.get_text_size(text[from_ind:ind], self.font_name, self.font_size)[0]
             from_ind = ind + len(h_match[h])
+            h += 1
+
+        draw_text(text[from_ind:])
+
+        return surface
 
     def _len_keys(self, text: str) -> int:
         match = re.search(r'\{.*}', text)
         res = 0
         if not match:
             return res
-        reduce(lambda x: len(x), match.groups(), res)
+        reduce(lambda x: DrawTools.get_text_size(x, self.font_name, self.font_size)[0], match.groups(), res)
         return res
 
     @property
-    def spaced_type(self) -> str:
+    def space_type(self) -> str:
         return self._spaced_type
 
-    @spaced_type.setter
-    def spaced_type(self, spaced_type: str):
+    @space_type.setter
+    def space_type(self, spaced_type: str):
         if spaced_type and not isinstance(spaced_type, str):
-            raise exceptions.CreateTypeException("spaced_type", str, type(spaced_type))
+            raise exceptions.CreateTypeException("space_type", str, type(spaced_type))
         names = [i.name.lower() for i in list(SPACED_TYPES)]
         if spaced_type not in names:
-            raise exceptions.CreateValueException(f"spaced_type", names, type(spaced_type))
+            raise exceptions.CreateValueException("space_type", names, spaced_type)
         self._spaced_type = spaced_type
