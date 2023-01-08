@@ -1,77 +1,138 @@
 import time
+
 from functools import reduce
 
+import typing
+from PIL.Image import Image
 from loguru import logger
 
-from .utils import vk, draw, widgets
+from VkDynamicCover.types import exceptions
+from VkDynamicCover.utils import VkTools, DrawTools
+from VkDynamicCover.widgets.widget import Widget
+from VkDynamicCover.widgets import *
+from VkDynamicCover import builders
 
-COVER_WIDTH = 1590
-COVER_HEIGHT = 530
-
-BACKGROUND = "background"
-FRONTGROUND = "frontground"
+COVER_WIDTH = 1920
+COVER_HEIGHT = 768
 
 SLEEP_SECONDS = 60
+
+VERSION_MAIN_CONFIG = "0.1"
+VERSION_COVER_CONFIG = "0.1"
 
 
 class DynamicCover:
     @logger.catch(reraise=True)
-    def __init__(self, config: dict):
+    def __init__(self, main_config: dict, cover_config: dict):
 
-        token = config["token"]
-        self.vk_session = vk.create_session(token)
-        self.group_id = config["group_id"]
-        self.surface = draw.create_surface(COVER_WIDTH, COVER_HEIGHT)
+        if main_config.get("VERSION") != VERSION_MAIN_CONFIG:
+            raise exceptions.CreateInvalidVersion("main_config")
 
-        self.widget_sets = self.get_widget_sets(
-            widget_sets=config.get("widget_sets"),
-            group_id=self.group_id,
-            app_id=config.get("app_id"),
-            vk_session=self.vk_session,
-            donate_key=config.get("donate_key")
-        )
+        if cover_config.get("VERSION") != VERSION_COVER_CONFIG:
+            raise exceptions.CreateInvalidVersion("widgets_config")
 
-        self.widget_cycle = config.get("widget_cycle", [])
-        self.cur_widget_set = 0 if len(self.widget_cycle) > 0 else -1
+        token = main_config["token"]
+        self.vk_session = VkTools.create_session(token)
+        VkTools.init(self.vk_session, main_config.get("app_id"))
 
-        sleep = config.get("sleep", 60)
+        show = cover_config["show"]
+        show_cycle = show if isinstance(show, list) else [show]
+        widget_list = WidgetCreator(main_config, cover_config["widgets"]).create_widgets()
+        group_id = main_config["group_id"]
+        self.cover_drawing = CoverDrawing(widget_list=widget_list,
+                                          show_cycle_names=show_cycle,
+                                          group_id=group_id)
 
+        sleep = main_config.get("sleep", SLEEP_SECONDS)
         self.sleep_cycle = [sleep] if isinstance(sleep, int) else sleep
         self.cur_sleep = 0
 
     def start(self):
         while True:
-            self.update()
+            self.cover_drawing.update()
             time.sleep(self.sleep_cycle[self.cur_sleep])
-            self.cur_sleep = self.cur_sleep + 1 if self.cur_sleep < len(self.sleep_cycle) - 1 else 0
+            self.cur_sleep = (self.cur_sleep + 1) % len(self.sleep_cycle)
+
+
+class WidgetCreator:
+    def __init__(self, main_config: dict, widget_list: typing.List[dict]):
+        self._main_config = main_config
+        self._widget_list = widget_list
+
+    def create_widgets(self) -> typing.List[widget.Widget]:
+        res_list = [self.create_widget(**widget_info) for widget_info in self._widget_list]
+
+        return res_list
+
+    def create_widget(self, **kwargs) -> widget.Widget:
+        tp = kwargs.get("type")
+        builder = None
+        if tp == text.Text.__name__:
+            builder = builders.TextBuilder()
+        elif tp == picture.Picture.__name__:
+            builder = builders.PictureBuilder()
+        elif tp == date.Date.__name__:
+            builder = builders.DateBuilder()
+        elif tp == statistics.Statistics.__name__:
+            builder = builders.StatisticsBuilder()
+        elif tp == rating.Rating.__name__:
+            builder = builders.RatingBuilder()
+        elif tp == profile.Profile.__name__:
+            builder = builders.ProfileBuilder()
+        else:
+            logger.warning(f"Неизвестный тип виджета - {tp}")
+
+        res_kwargs = {}
+        res_kwargs.update(self._main_config)
+        res_kwargs.update(kwargs)
+        res = builder.create(**res_kwargs)
+        logger.debug(f"Create widget {res}")
+        return res
+
+
+class CoverDrawing:
+    def __init__(self, widget_list, show_cycle_names, group_id):
+        self._widget_list: typing.List[Widget] = widget_list
+        self._show_cycle: typing.List[typing.List[Widget]] = []
+        self._create_show_cycle(show_cycle_names=show_cycle_names)
+        self._surface = DrawTools.create_surface(COVER_WIDTH, COVER_HEIGHT)
+        self._group_id = group_id
+
+        self._cur_show = 0
 
     @logger.catch(reraise=False)
     def update(self):
-        self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(BACKGROUND, []), self.surface)
+        self._surface = self.draw(self._surface)
 
-        if self.cur_widget_set >= 0:
-            set_name = self.widget_cycle[self.cur_widget_set]
-            self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(set_name, []), self.surface)
-
-            if set_name not in self.widget_sets:
-                logger.warning(f"Набор виджетов {set_name} не найден")
-
-        self.surface = reduce(lambda surf, wid: wid.draw(surf), self.widget_sets.get(FRONTGROUND, []), self.surface)
-
-        vk.push_cover(vk_session=self.vk_session, surface_bytes=draw.get_byte_image(self.surface),
-                      surface_width=self.surface.width, surface_height=self.surface.height,
-                      group_id=self.group_id)
+        VkTools.push_cover(surface_bytes=DrawTools.get_byte_image(self._surface),
+                           surface_width=self._surface.width, surface_height=self._surface.height,
+                           group_id=self._group_id)
         logger.info(f"Обложка успешно обновлена")
 
-        if self.cur_widget_set < 0:
-            return
-        self.cur_widget_set = self.cur_widget_set + 1 if self.cur_widget_set < len(self.widget_cycle) - 1 else 0
+    def draw(self, surface: Image) -> Image:
+        DrawTools.clear(surface)
+        surface = reduce(lambda s, w: w.draw(s), self._show_cycle[self._cur_show], surface)
+        self._cur_show = (self._cur_show + 1) % len(self._show_cycle)
+        return surface
 
-    @logger.catch(reraise=True)
-    def get_widget_sets(self, widget_sets, **config) -> dict:
-        for key, value in widget_sets.items():
-            if isinstance(value, dict):
-                widget_sets[key] = [widgets.create_widget(config, **value)]
-            else:
-                widget_sets[key] = [widgets.create_widget(config, **wid) for wid in value]
-        return widget_sets
+    def _create_show_cycle(self, show_cycle_names):
+        def get_widget(name: str):
+            for wi in self._widget_list:
+                if name == wi.name:
+                    return wi
+            logger.warning(f"Not found widget with name {name}")
+
+        for w in show_cycle_names:
+            if not isinstance(w, list):
+                wid = get_widget(w)
+                if wid:
+                    self._show_cycle.append([wid])
+                continue
+
+            tmp_lst = []
+            for ww in w:
+                wid = get_widget(ww)
+                if wid:
+                    tmp_lst.append(wid)
+            self._show_cycle.append(tmp_lst)
+

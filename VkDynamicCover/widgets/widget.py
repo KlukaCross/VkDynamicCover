@@ -1,15 +1,39 @@
+import uuid
+
+from abc import ABC, abstractmethod
 from PIL import Image
+from VkDynamicCover.types import exceptions
 
 
-class Widget:
-    def __init__(self, config, **kwargs):
-        self.vk_session = config.get("vk_session")
-        self.app_id = config.get("app_id")
-        self.group_id = config.get("group_id")
-        self.donate_key = config.get("donate_key")
+class Widget(ABC):
+    def __init__(self, **kwargs):
+        self.type = kwargs.get("type")
+        self.name = kwargs.get("name")
 
-        self.name = kwargs.get("name", "Widget")
-        self.xy = kwargs.get("xy", (0, 0))
-
+    @abstractmethod
     def draw(self, surface: Image) -> Image:
         return surface
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @type.setter
+    def type(self, tp: str):
+        if not isinstance(tp, str):
+            raise exceptions.CreateTypeException("type", str, type(tp))
+        self._type = tp
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, name: str):
+        if name and not isinstance(name, str):
+            raise exceptions.CreateTypeException("name", str, type(name))
+        self._name = name if name else uuid.uuid4()
+

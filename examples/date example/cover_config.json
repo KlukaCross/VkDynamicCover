@@ -1,0 +1,63 @@
+{
+  "VERSION": "0.1",
+  "show": [["w2", "w3", "w4", "w5", "w6", "w7"]],
+  "widgets":
+    [
+      {
+        "name": "w2",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Сегодняшняя дата: {day}.{month}.{year}",
+        "xy": [0, 200],
+        "stroke_width": 3,
+        "stroke_fill": "green"
+      },
+      {
+        "name": "w3",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Сегодняшняя дата: {day} {month_rus_r} {year} года",
+        "xy": [0, 275],
+        "stroke_width": 3,
+        "stroke_fill": "blue"
+      },
+      {
+        "name": "w4",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Сегодня {week_rus}!",
+        "xy": [0, 350],
+        "stroke_width": 3,
+        "stroke_fill": "red"
+      },
+      {
+        "name": "w5",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Время: {hour}:{minute}:{second}",
+        "xy": [0, 425],
+        "stroke_width": 1,
+        "stroke_fill": "yellow"
+      },
+      {
+        "name": "w6",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Время -2 часа: {hour}:{minute}:{second}",
+        "shift": {"hour": -2},
+        "xy": [0, 500],
+        "stroke_width": 3,
+        "stroke_fill": "gray"
+      },
+      {
+        "name": "w7",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Дата +1300 лет: {day} {month_rus} {year}",
+        "shift": {"year": 1300},
+        "xy": [0, 575],
+        "stroke_width": 3,
+        "stroke_fill": "purple"
+      }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+  "VERSION": "0.1",
+  "show": [["w2"]],
+  "widgets":
+    [
+      {
+        "name": "w2",
+        "type": "Statistics",
+        "fill": "black",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "xy": [100, 200],
+        "text": "Подписчиков: {members_count}\nЗа последние семь дней:\nКомментариев: {comments}\nРепостов: {copies}\nЛайков: {likes}\nПодписчиков: {subscribed}",
+        "interval": "week"
+      }
+    ]
+}
