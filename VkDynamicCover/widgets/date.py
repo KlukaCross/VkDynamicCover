@@ -6,7 +6,7 @@ from .text import FormattingText
 from .widget import Widget
 from VkDynamicCover.utils import TimeTools
 from VkDynamicCover.types import exceptions
-from ..helpers.text_formatting import FormatterFunction, TextInserter
+from VkDynamicCover.text_formatting import FormatterFunction, TextInserter
 
 
 class Date(Widget):

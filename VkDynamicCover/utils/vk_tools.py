@@ -25,7 +25,7 @@ class _VkTools(metaclass=MetaSingleton):
     def create_session(token) -> vk_api.VkApi:
         return vk_api.VkApi(token=token)
 
-    def push_cover(self, surface_bytes: bytes, surface_width, surface_height, group_id: int):
+    def push_cover(self, surface_bytes: bytes, surface_width: int, surface_height: int, group_id: int):
         upload_photo_url = self._vk_meth.photos.getOwnerCoverPhotoUploadServer(group_id=group_id,
                                                                                crop_x=0, crop_y=0,
                                                                                crop_x2=surface_width,

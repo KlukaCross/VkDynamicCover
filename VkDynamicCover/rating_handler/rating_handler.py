@@ -4,9 +4,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
 from vk_api.bot_longpoll import VkBotEventType
 
-from VkDynamicCover.helpers.rating.rating_members import RatingMembers
-from VkDynamicCover.helpers.text_formatting import TextCalculator, FormatterFunction
-from VkDynamicCover.types import MetaSingleton, MemberInfo
+from VkDynamicCover.text_formatting import TextCalculator, FormatterFunction
+from VkDynamicCover.types import MemberInfo
 from VkDynamicCover.listeners import Subscriber
 import typing
 
@@ -43,6 +42,16 @@ class RatingHandler(Subscriber):
             seconds=RATING_UPDATE_SECONDS
         )
         self.scheduler.start()
+
+    def add_rating(self, rating_info: RatingInfo):
+        interval = TimeTools.get_period_interval(rating_info.period)
+        if interval not in self._ratings:
+            self._ratings[interval] = RatingMembers()
+            self._rating_info[interval] = [rating_info]
+        else:
+            self._rating_info[interval].append(rating_info)
+        self._init_rating(interval)
+        self._update_rating(interval, rating_info)
 
     def update(self, event):
         logger.debug(f"Новое событие {event}")
@@ -87,6 +96,34 @@ class RatingHandler(Subscriber):
             self.update_last_subs()
             return
 
+    @logger.catch(reraise=False)
+    def update_donates(self):
+        pass
+
+    def update_last_subs(self):
+        member_ids = VkTools.get_group_member_ids(group_id=self._group_id,
+                                                  sort="time_desc",
+                                                  count=self._max_last_subs)
+        logger.debug(f"Обновлён рейтинг последних подписчиков: {member_ids}")
+        for i in range(len(member_ids)):
+            self._last_subscriber_ids[i] = member_ids[i]
+
+    def get_last_subscriber_ids(self, number: int) -> typing.List[int]:
+        return self._last_subscriber_ids[:number]
+
+    def add_track_last_subscribers(self, max_subs: int):
+        self._max_last_subs = max(self._max_last_subs, max_subs)
+
+    @staticmethod
+    def get_formula_member_info(member_info: MemberInfo) -> typing.Dict[str, any]:
+        return {
+            "post_likes": len(member_info.like_posts),
+            "post_comments": len(member_info.comment_posts),
+            "reposts": len(member_info.repost_posts),
+            "posts": len(member_info.released_posts),
+            "donates": member_info.donates
+        }
+
     def _update_ratings(self):
         for interval, rating_info_list in self._rating_info.items():
             if self._is_reset_rating(interval):
@@ -117,16 +154,6 @@ class RatingHandler(Subscriber):
                                                                               member_info=member_info))
 
         return res
-
-    def add_rating(self, rating_info: RatingInfo):
-        interval = TimeTools.get_period_interval(rating_info.period)
-        if interval not in self._ratings:
-            self._ratings[interval] = RatingMembers()
-            self._rating_info[interval] = [rating_info]
-        else:
-            self._rating_info[interval].append(rating_info)
-        self._init_rating(interval)
-        self._update_rating(interval, rating_info)
 
     def _init_rating(self, interval: Interval):
         logger.info("Инициализируется рейтинг...")
@@ -166,7 +193,7 @@ class RatingHandler(Subscriber):
     def _is_reset_rating(interval: Interval) -> bool:
         return datetime.datetime.now().timestamp() > interval.to
 
-    def _add_point(self, user_id, event: UpdateRatingEvents, resource: int, resource_unixtime: int) -> bool:
+    def _add_point(self, user_id: int, event: UpdateRatingEvents, resource: int, resource_unixtime: int) -> bool:
         if user_id < 0:
             return True
         for interval, members in self._ratings.items():
@@ -196,50 +223,20 @@ class RatingHandler(Subscriber):
             logger.debug(f"Пользователю {user_id} добавлен ресурс {resource} для {event.name}")
         return True
 
-    @logger.catch(reraise=False)
-    def update_donates(self):
-        """
-        if not self.donate_key:
-            logger.warning("Отсутствует donate_key")
-            return
 
-        res = donates.get_donates(key=self.donate_key, count=50)
+class RatingMembers:
+    def __init__(self):
+        self._rating: typing.Dict[int, MemberInfo] = {}
 
-        if not res["success"]:
-            return
+    def add(self, member_id: int) -> MemberInfo:
+        if member_id in self._rating:
+            return self._rating[member_id]
+        member_info = MemberInfo(member_id=member_id)
+        self._rating[member_id] = member_info
+        return member_info
 
-        for d in res["donates"]:
-            if d["id"] in self.check_donate_ids:
-                continue
-            self.check_donate_ids.append(d["id"])
+    def get_member(self, member_id: int) -> MemberInfo or None:
+        return self._rating.get(member_id)
 
-            if d["anon"]:
-                continue
-            if d["ts"] > self.rating_period[0]:
-                self._add_point(d["uid"], "donates", d["sum"])
-        """
-        pass
-
-    def update_last_subs(self):
-        member_ids = VkTools.get_group_member_ids(group_id=self._group_id,
-                                                  sort="time_desc",
-                                                  count=self._max_last_subs)
-        logger.debug(f"Обновлён рейтинг последних подписчиков: {member_ids}")
-        for i in range(len(member_ids)):
-            self._last_subscriber_ids[i] = member_ids[i]
-
-    def get_last_subscriber_ids(self, number: int) -> typing.List[int]:
-        return self._last_subscriber_ids[:number]
-
-    def add_track_last_subscribers(self, max_subs: int):
-        self._max_last_subs = max(self._max_last_subs, max_subs)
-
-    @staticmethod
-    def get_formula_member_info(member_info: MemberInfo) -> typing.Dict[str, any]:
-        return {
-            "post_likes": len(member_info.like_posts),
-            "post_comments": len(member_info.comment_posts),
-            "reposts": len(member_info.repost_posts),
-            "posts": len(member_info.released_posts),
-            "donates": member_info.donates
-        }
+    def get_all(self) -> typing.List[MemberInfo]:
+        return list(self._rating.values())

@@ -1,5 +1,4 @@
 import random
-from copy import copy
 
 import typing
 from PIL import Image
@@ -13,7 +12,7 @@ from VkDynamicCover.utils import VkTools
 from abc import abstractmethod, ABC
 
 
-class Picture(Widget):
+class Picture(Widget, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.resize = kwargs.get("resize")
@@ -114,6 +113,10 @@ class RandomPicture(Picture, ABC):
         if random_formula and not isinstance(random_formula, str):
             raise exceptions.CreateTypeException("random_formula", str, type(random_formula))
         self._random_formula = random_formula
+
+    @abstractmethod
+    def get_image(self) -> Image:
+        raise NotImplementedError
 
     def set_random_function(self):
         if not self.random_formula:

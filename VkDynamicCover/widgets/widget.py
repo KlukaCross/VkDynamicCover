@@ -1,14 +1,16 @@
 import uuid
 
+from abc import ABC, abstractmethod
 from PIL import Image
 from VkDynamicCover.types import exceptions
 
 
-class Widget:
+class Widget(ABC):
     def __init__(self, **kwargs):
         self.type = kwargs.get("type")
         self.name = kwargs.get("name")
 
+    @abstractmethod
     def draw(self, surface: Image) -> Image:
         return surface
 
@@ -22,7 +24,7 @@ class Widget:
     @type.setter
     def type(self, tp: str):
         if not isinstance(tp, str):
-            raise exceptions.CreateTypeException(f"type must be str, not {type(tp)}")
+            raise exceptions.CreateTypeException("type", str, type(tp))
         self._type = tp
 
     @property
@@ -32,6 +34,6 @@ class Widget:
     @name.setter
     def name(self, name: str):
         if name and not isinstance(name, str):
-            raise exceptions.CreateTypeException(f"name must be str, not {type(name)}")
+            raise exceptions.CreateTypeException("name", str, type(name))
         self._name = name if name else uuid.uuid4()
 

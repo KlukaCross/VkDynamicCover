@@ -2,11 +2,15 @@ import time
 
 from functools import reduce
 
+import typing
 from PIL.Image import Image
 from loguru import logger
 
-from .types import exceptions
-from .utils import VkTools, DrawTools, WidgetCreator
+from VkDynamicCover.types import exceptions
+from VkDynamicCover.utils import VkTools, DrawTools
+from VkDynamicCover.widgets.widget import Widget
+from VkDynamicCover.widgets import *
+from VkDynamicCover import builders
 
 COVER_WIDTH = 1920
 COVER_HEIGHT = 768
@@ -50,15 +54,51 @@ class DynamicCover:
             self.cur_sleep = (self.cur_sleep + 1) % len(self.sleep_cycle)
 
 
+class WidgetCreator:
+    def __init__(self, main_config: dict, widget_list: typing.List[dict]):
+        self._main_config = main_config
+        self._widget_list = widget_list
+
+    def create_widgets(self) -> typing.List[widget.Widget]:
+        res_list = [self.create_widget(**widget_info) for widget_info in self._widget_list]
+
+        return res_list
+
+    def create_widget(self, **kwargs) -> widget.Widget:
+        tp = kwargs.get("type")
+        builder = None
+        if tp == text.Text.__name__:
+            builder = builders.TextBuilder()
+        elif tp == picture.Picture.__name__:
+            builder = builders.PictureBuilder()
+        elif tp == date.Date.__name__:
+            builder = builders.DateBuilder()
+        elif tp == statistics.Statistics.__name__:
+            builder = builders.StatisticsBuilder()
+        elif tp == rating.Rating.__name__:
+            builder = builders.RatingBuilder()
+        elif tp == profile.Profile.__name__:
+            builder = builders.ProfileBuilder()
+        else:
+            logger.warning(f"Неизвестный тип виджета - {tp}")
+
+        res_kwargs = {}
+        res_kwargs.update(self._main_config)
+        res_kwargs.update(kwargs)
+        res = builder.create(**res_kwargs)
+        logger.debug(f"Create widget {res}")
+        return res
+
+
 class CoverDrawing:
     def __init__(self, widget_list, show_cycle_names, group_id):
-        self._widget_list = widget_list
-        self.show_cycle = []
+        self._widget_list: typing.List[Widget] = widget_list
+        self._show_cycle: typing.List[typing.List[Widget]] = []
         self._create_show_cycle(show_cycle_names=show_cycle_names)
         self._surface = DrawTools.create_surface(COVER_WIDTH, COVER_HEIGHT)
         self._group_id = group_id
 
-        self.cur_show = 0
+        self._cur_show = 0
 
     @logger.catch(reraise=False)
     def update(self):
@@ -71,28 +111,28 @@ class CoverDrawing:
 
     def draw(self, surface: Image) -> Image:
         DrawTools.clear(surface)
-        surface = reduce(lambda s, w: w.draw(s), self.show_cycle[self.cur_show], surface)
-        self.cur_show = (self.cur_show + 1) % len(self.show_cycle)
+        surface = reduce(lambda s, w: w.draw(s), self._show_cycle[self._cur_show], surface)
+        self._cur_show = (self._cur_show + 1) % len(self._show_cycle)
         return surface
 
     def _create_show_cycle(self, show_cycle_names):
         def get_widget(name: str):
-            for wid in self._widget_list:
-                if name == wid.name:
-                    return wid
+            for wi in self._widget_list:
+                if name == wi.name:
+                    return wi
             logger.warning(f"Not found widget with name {name}")
 
         for w in show_cycle_names:
             if not isinstance(w, list):
-                widget = get_widget(w)
-                if widget:
-                    self.show_cycle.append([widget])
+                wid = get_widget(w)
+                if wid:
+                    self._show_cycle.append([wid])
                 continue
 
             tmp_lst = []
             for ww in w:
-                widget = get_widget(ww)
-                if widget:
-                    tmp_lst.append(widget)
-            self.show_cycle.append(tmp_lst)
+                wid = get_widget(ww)
+                if wid:
+                    tmp_lst.append(wid)
+            self._show_cycle.append(tmp_lst)
 

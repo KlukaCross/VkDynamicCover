@@ -1,7 +1,6 @@
 import typing
-from loguru import logger
 
-from VkDynamicCover.helpers import text_formatting as formatting
+from .. import text_formatting as formatting
 from .text import FormattingText
 from .widget import Widget
 from VkDynamicCover.utils import VkTools

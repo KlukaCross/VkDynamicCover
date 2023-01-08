@@ -1,7 +1,7 @@
 from VkDynamicCover.builders.text_builder import TextBuilder
 from VkDynamicCover.builders.profile_builder import ProfileBuilder
 from VkDynamicCover.builders.widget_builder import WidgetBuilder
-from VkDynamicCover.helpers.rating.rating_handler import RatingHandler
+from VkDynamicCover.rating_handler.rating_handler import RatingHandler
 from VkDynamicCover.listeners import LongpollListener
 from VkDynamicCover.types.rating_info import RatingInfo
 from VkDynamicCover.widgets.rating import Rating, RatingPlace
@@ -20,7 +20,9 @@ class RatingBuilder(WidgetBuilder):
         kwargs["text"] = TextBuilder().create(**kwargs)
 
         rating = Rating(**kwargs)
-        RatingHandlerBuilder().create(group_id=kwargs["group_id"]).add_rating(kwargs["rating_info"])
+        handler = RatingHandler(kwargs["group_id"])
+        LongpollListener(kwargs["group_id"]).subscribe(handler)
+        handler.add_rating(kwargs["rating_info"])
 
         return rating
 
@@ -32,12 +34,3 @@ class RatingPlaceBuilder(WidgetBuilder):
         kwargs["profile"] = ProfileBuilder().create(**kwargs)
 
         return RatingPlace(**kwargs)
-
-
-class RatingHandlerBuilder:
-    def create(self, **kwargs) -> RatingHandler:
-        group_id = kwargs["group_id"]
-        handler = RatingHandler(group_id)
-        LongpollListener(group_id).subscribe(handler)
-
-        return handler

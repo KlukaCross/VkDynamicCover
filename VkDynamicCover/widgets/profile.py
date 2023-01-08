@@ -1,10 +1,10 @@
 import typing
 
-from VkDynamicCover.helpers.text_formatting import TextInserter
-from VkDynamicCover.widgets.text import Text, FormattingText
+from VkDynamicCover.text_formatting import TextInserter
+from VkDynamicCover.widgets.text import FormattingText
 from VkDynamicCover.widgets.widget import Widget
 from VkDynamicCover.widgets.picture import Picture
-from VkDynamicCover.helpers.text_formatting.text_formatter import FormatterFunction
+from VkDynamicCover.text_formatting import FormatterFunction
 from VkDynamicCover.types import exceptions
 
 from VkDynamicCover.utils import VkTools

@@ -19,13 +19,6 @@ class _TimeTools:
 
     @staticmethod
     def format_time(dtime: datetime.datetime) -> typing.Dict[str, int]:
-        #text = text \
-        #    .replace("{month_z}", "{month_z:0>2}") \
-        #    .replace("{day_z}", "{day_z:0>2}") \
-        #    .replace("{hour_z}", "{hour_z:0>2}") \
-        #    .replace("{minute_z}", "{minute_z:0>2}") \
-        #    .replace("{second_z}", "{second_z:0>2}")
-
         return {"year": dtime.year,
                 "month": dtime.month,
                 "month_rus": MONTHS_RUS[dtime.month - 1],
@@ -43,7 +36,7 @@ class _TimeTools:
                 "second_z": dtime.second}
 
     @staticmethod
-    def shift_time(dtime: datetime.datetime, shift: dict) -> datetime:
+    def shift_time(dtime: datetime.datetime, shift: dict) -> datetime.datetime:
         dtime += datetime.timedelta(weeks=shift["week"],
                                     days=shift["day"],
                                     hours=shift["hour"],
@@ -55,7 +48,7 @@ class _TimeTools:
         return dtime
 
     @staticmethod
-    def get_period_interval(period) -> (int, int):
+    def get_period_interval(period: str) -> (int, int):
         tmp = datetime.datetime.now()
         if period == "day":
             fr = tmp.replace(hour=0, minute=0, second=0)

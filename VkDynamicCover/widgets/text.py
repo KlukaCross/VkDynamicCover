@@ -2,7 +2,7 @@ from functools import reduce
 
 from VkDynamicCover.types.spaced_types import SPACED_TYPES
 from VkDynamicCover.widgets.widget import Widget
-from VkDynamicCover.helpers.text_formatting.text_formatter import TextFormatter
+from VkDynamicCover.text_formatting import TextFormatter
 from VkDynamicCover.utils import DrawTools
 from VkDynamicCover.types import LIMITED_ACTION, exceptions, Coordinates
 import re

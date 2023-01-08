@@ -3,10 +3,10 @@ from functools import reduce
 
 from VkDynamicCover.widgets.profile import Profile, UserInfo
 
-from .text import FormattingText, Text
+from .text import Text
 from .widget import Widget
-from VkDynamicCover.helpers.text_formatting.text_formatter import FormatterFunction
-from VkDynamicCover.helpers.text_formatting import TextInserter
+from VkDynamicCover.text_formatting import FormatterFunction
+from VkDynamicCover.text_formatting import TextInserter
 from VkDynamicCover.types.member_info import EasyMemberInfo
 from VkDynamicCover.types.rating_info import RatingInfo
 from VkDynamicCover.types import exceptions
