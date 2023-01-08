@@ -9,14 +9,14 @@ from loguru import logger
 from . import DynamicCover, __version__
 
 MAIN_CONFIG_PATH = Path.cwd() / "main_config.json"
-WIDGET_CONFIG_PATH = Path.cwd() / "widget_config.json"
+WIDGET_CONFIG_PATH = Path.cwd() / "cover_config.json"
 
 
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="VkDynamicCover",
         description="Program for dynamic updating cover of a group or a public in VK",
-        epilog="(C) 2022 Oleg Mezenin\nReleased under the MIT License."
+        epilog="(C) 2023 Oleg Mezenin\nReleased under the MIT License."
     )
 
     parser.add_argument(
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         VkDynamicCover {__version__}
         OS: {sys.platform}
         Main config path: {args.main_config}
-        Widget config path: {args.widget_config}
+        Cover config path: {args.widget_config}
         """
     )
 

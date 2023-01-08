@@ -29,7 +29,7 @@ class DynamicCover:
             raise exceptions.CreateInvalidVersion("main_config")
 
         if cover_config.get("VERSION") != VERSION_COVER_CONFIG:
-            raise exceptions.CreateInvalidVersion("widgets_config")
+            raise exceptions.CreateInvalidVersion("cover_config")
 
         token = main_config["token"]
         self.vk_session = VkTools.create_session(token)

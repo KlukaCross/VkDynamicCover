@@ -1,6 +1,5 @@
 .idea
 tests
-examples/config.json
 examples/logs
 build
 VkDynamicCover.egg-info
