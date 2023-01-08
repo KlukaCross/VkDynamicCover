@@ -1,34 +1,66 @@
-from VkDynamicCover.widgets.text_set import TextSet
+import typing
 
-from ..utils import widgets, vk
+from VkDynamicCover.text_formatting import TextInserter
+from VkDynamicCover.widgets.text import FormattingText
+from VkDynamicCover.widgets.widget import Widget
+from VkDynamicCover.widgets.picture import Picture
+from VkDynamicCover.text_formatting import FormatterFunction
+from VkDynamicCover.types import exceptions
+
+from VkDynamicCover.utils import VkTools
 
 
-class Profile(TextSet):
-    def __init__(self, config, **kwargs):
-        super().__init__(config, **kwargs)
-
-        self.crop_type = kwargs.get("crop_type", "crop")
-
-        self.user_id = kwargs.get("user_id")
-
-        avatar = kwargs.get("avatar", {})
-        avatar["name"] = "Avatar"
-        self.avatar = widgets.create_widget(config, **avatar) if "avatar" in kwargs else None
+class Profile(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.info = kwargs.get("info")
+        self.avatar = kwargs.get("avatar")
 
     def draw(self, surface):
-        if not self.user_id:
-            return surface
-        surface = super().draw(surface)
-
+        if self.info:
+            surface = self.info.draw(surface)
         if self.avatar:
             surface = self.avatar.draw(surface)
         return surface
 
-    def get_format_text(self, text) -> str:
-        user = vk.get_user(vk_session=self.vk_session, user_id=self.user_id)
-        return text.format(first_name=user["first_name"], last_name=user["last_name"])
+    @property
+    def info(self) -> "UserInfo":
+        return self._info
 
-    def set_user_id(self, user_id):
-        self.user_id = user_id
-        if self.avatar:
-            self.avatar.user_id = user_id
+    @info.setter
+    def info(self, info: "UserInfo"):
+        if info and not isinstance(info, UserInfo):
+            raise exceptions.CreateTypeException("info", UserInfo, type(info))
+        self._info = info
+
+    @property
+    def avatar(self) -> Picture:
+        return self._avatar
+
+    @avatar.setter
+    def avatar(self, avatar: Picture):
+        if avatar and not isinstance(avatar, Picture):
+            raise exceptions.CreateTypeException("avatar", Picture, type(avatar))
+        self._avatar = avatar
+
+
+class UserInfo(FormattingText):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.user_id = kwargs.get("user_id")
+        self.formatter = TextInserter(FormatterFunction(UserInfo.get_user_info, user_id=self.user_id))
+
+    @staticmethod
+    def get_user_info(user_id: int) -> typing.Dict[str, str]:
+        user_info = VkTools.get_user(user_id=user_id)
+        return user_info
+
+    @property
+    def user_id(self) -> int:
+        return self._user_id
+
+    @user_id.setter
+    def user_id(self, user_id: int):
+        if user_id and not isinstance(user_id, int):
+            raise exceptions.CreateTypeException("user_id", int, type(user_id))
+        self._user_id = user_id

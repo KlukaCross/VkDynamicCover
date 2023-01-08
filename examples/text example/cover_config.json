@@ -1,0 +1,117 @@
+{
+  "VERSION": "0.1",
+  "show": [["w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9", "w10", "w11", "w12"]],
+  "widgets":
+    [
+      {
+        "name": "w1",
+        "type": "Text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Simple text",
+        "xy": [500, 300]
+      },
+      {
+        "name": "w2",
+        "type": "Text",
+        "text": "Text with anchor \"rb\" in right bottom corner",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 20,
+        "xy": [1400, 500],
+        "anchor": "rb"
+      },
+      {
+        "name": "w3",
+        "type": "Text",
+        "text": "Text in another font",
+        "xy": [400, 600],
+        "font_name": "./examples/fonts/VERDANAI.TTF",
+        "font_size": 50
+      },
+      {
+        "name": "w4",
+        "type": "Text",
+        "text": "Red text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 30,
+        "xy": [0, 400],
+        "fill": "red"
+      },
+      {
+        "name": "w5",
+        "type": "Text",
+        "text": "blue text is #39d6e7",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 30,
+        "xy": [0, 450],
+        "fill": "#39d6e7"
+      },
+      {
+        "name": "w6",
+        "type": "Text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "is\nmultiline\ntext\nwith\nspacing=10",
+        "xy": [100, 200],
+        "font_size": 28,
+        "spacing": 10
+      },
+      {
+        "name": "w7",
+        "type": "Text",
+        "text": "text with direction=\"rtl\"",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "xy": [400, 700],
+        "font_size": 30,
+        "direction": "rtl"
+      },
+      {
+        "name": "w8",
+        "type": "Text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "text with direction=\"ttb\"",
+        "xy": [300, 150],
+        "font_size": 23,
+        "direction": "ttb"
+      },
+      {
+        "name": "w9",
+        "type": "Text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "text with stroke",
+        "xy": [400, 200],
+        "font_size": 30,
+        "stroke_width": 2,
+        "stroke_fill": "green"
+      },
+      {
+        "name": "w10",
+        "type": "Text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+            "text": "very long text very long text very long text very long text very long text",
+        "font_size": 20,
+            "xy": [750, 200],
+            "limit": 15,
+            "limit_action": "newline",
+            "limit_end": "-"
+      },
+      {
+        "name": "w11",
+        "type": "Text",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+            "text": "very long text very long text very long text very long text very long text",
+        "font_size": 20,
+            "xy": [1000, 200],
+            "limit": 20,
+            "limit_action": "delete",
+            "limit_end": "..."
+      },
+      {
+        "name": "w12",
+        "type": "Text",
+        "text": "one[hspace(25)][vspace(25)]two[hspace(25)][vspace(25)]three",
+        "space_type": "pre_form",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 30,
+        "xy": [1300, 400]
+      }
+    ]
+}

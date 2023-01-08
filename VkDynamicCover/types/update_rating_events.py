@@ -1,0 +1,14 @@
+from enum import Enum
+
+
+class UpdateRatingEvents(Enum):
+    ADD_LIKED_POST = 0
+    ADD_LIKED_COMMENT = 1
+    ADD_COMMENTED_POST = 2
+    ADD_COMMENTED_COMMENT = 3
+    ADD_REPOSTED_POST = 4
+    ADD_RELEASED_POST = 5
+    ADD_DONATE = 6
+
+    DEL_LIKED_POST = 7
+    DEL_LIKED_COMMENT = 8
