@@ -1,0 +1,46 @@
+{
+  "VERSION": "0.1",
+  "show": [["w1", "w2", "time"], ["w3", "w4", "time"]],
+  "widgets":
+    [
+      {
+        "name": "w1",
+        "type": "Text",
+        "text": "Slide 1",
+        "font_name": "./examples/fonts/VERDANAB.TTF",
+        "font_size": 60,
+        "xy": [0, 300]
+      },
+      {
+        "name": "w2",
+        "type": "Text",
+        "text": "simple widget 1",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 50,
+        "xy": [400, 300]
+      },
+      {
+        "name": "w3",
+        "type": "Text",
+        "text": "Slide 2",
+        "font_name": "./examples/fonts/VERDANAB.TTF",
+        "font_size": 60,
+        "xy": [0, 300]
+      },
+      {
+        "name": "w4",
+        "type": "Text",
+        "text": "simple widget 2",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 50,
+        "xy": [400, 300]
+      },
+      {
+        "name": "time",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Дата: {day_z}.{month_z}.{year}\nВремя: {hour_z}:{minute_z}:{second_z}",
+        "xy": [0, 150]
+      }
+    ]
+}

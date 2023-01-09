@@ -1,0 +1,58 @@
+{
+  "VERSION": "0.1",
+  "show": [["w1", "time", "w2"]],
+  "widgets": [
+      {
+        "name": "w1",
+        "type": "Picture",
+        "path": "./examples/img/bg.png"
+      },
+      {
+        "name": "time",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Дата: {day_z}.{month_z}.{year}\nВремя: {hour_z}:{minute_z}:{second_z}",
+        "xy": [0, 150],
+        "fill": "white"
+      },
+      {
+        "name": "w2",
+        "type": "Rating",
+        "period": "week",
+        "point_formula": "{post_likes}+{post_comments}*2",
+        "places": [
+          {
+            "xy": [300, 300],
+            "text": "1) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "fill": "white",
+            "font_name": "./examples/fonts/VERDANA.TTF"
+          },
+          {
+            "xy": [300, 350],
+            "text": "2) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "space_type": "post_form",
+            "fill": "white",
+            "font_name": "./examples/fonts/VERDANA.TTF"
+          },
+          {
+            "xy": [300, 400],
+            "text": "3) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "fill": "white",
+            "font_name": "./examples/fonts/VERDANA.TTF"
+          },
+          {
+            "xy": [300, 450],
+            "text": "4) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "fill": "white",
+            "font_name": "./examples/fonts/VERDANA.TTF"
+          },
+          {
+            "xy": [300, 500],
+            "text": "5) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "fill": "white",
+            "font_name": "./examples/fonts/VERDANA.TTF"
+          }
+        ]
+      }
+  ]
+}

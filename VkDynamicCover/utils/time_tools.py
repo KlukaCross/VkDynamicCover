@@ -19,6 +19,11 @@ class _TimeTools:
 
     @staticmethod
     def format_time(dtime: datetime.datetime) -> typing.Dict[str, int]:
+        day_z = "{:02d}".format(dtime.day)
+        month_z = "{:02d}".format(dtime.month)
+        hour_z = "{:02d}".format(dtime.hour)
+        minute_z = "{:02d}".format(dtime.minute)
+        second_z = "{:02d}".format(dtime.second)
         return {"year": dtime.year,
                 "month": dtime.month,
                 "month_rus": MONTHS_RUS[dtime.month - 1],
@@ -29,11 +34,11 @@ class _TimeTools:
                 "hour": dtime.hour,
                 "minute": dtime.minute,
                 "second": dtime.second,
-                "day_z": dtime.day,
-                "month_z": dtime.month,
-                "hour_z": dtime.hour,
-                "minute_z": dtime.minute,
-                "second_z": dtime.second}
+                "day_z": day_z,
+                "month_z": month_z,
+                "hour_z": hour_z,
+                "minute_z": minute_z,
+                "second_z": second_z}
 
     @staticmethod
     def shift_time(dtime: datetime.datetime, shift: dict) -> datetime.datetime:

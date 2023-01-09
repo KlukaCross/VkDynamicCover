@@ -1,14 +1,19 @@
 {
   "VERSION": "0.1",
-  "show": [["w2"]],
+  "show": [["time","w2"]],
   "widgets":
-    [
+    [{
+        "name": "time",
+        "type": "Date",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "text": "Дата: {day_z}.{month_z}.{year}\nВремя: {hour_z}:{minute_z}:{second_z}",
+        "xy": [0, 150]
+      },
       {
         "name": "w2",
         "type": "Statistics",
-        "fill": "black",
         "font_name": "./examples/fonts/VERDANA.TTF",
-        "xy": [100, 200],
+        "xy": [200, 300],
         "text": "Подписчиков: {members_count}\nЗа последние семь дней:\nКомментариев: {comments}\nРепостов: {copies}\nЛайков: {likes}\nПодписчиков: {subscribed}",
         "interval": "week"
       }

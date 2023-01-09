@@ -21,7 +21,7 @@ setup(
 
     description="Program for dynamic updating cover of a group or a public in VK",
     long_description=long_description,
-    long_description_content_type='text example/markdown',
+    long_description_content_type='text/markdown',
 
     url="https://github.com/KlukaCross/VkDynamicCover",
     download_url="https://github.com/KlukaCross/VkDynamicCover/releases/latest",

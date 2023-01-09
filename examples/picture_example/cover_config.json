@@ -1,0 +1,20 @@
+{
+  "VERSION": "0.1",
+  "show": [["w1", "w2"]],
+  "widgets": [
+    {
+      "name": "w1",
+      "type": "Picture",
+      "xy": [150, 150],
+      "resize": [700, "auto"],
+      "path": "./examples/img/bg.png"
+    },
+    {
+      "name": "w2",
+      "type": "Picture",
+      "xy": [1000, 350],
+      "resize": [350, 350],
+      "url": "https://million-wallpapers.ru/wallpapers/5/5/15358753003924037261/milyj-kotenok-s-podognutymi-lapkami.jpg"
+    }
+  ]
+}

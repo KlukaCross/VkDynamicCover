@@ -7,7 +7,7 @@
         "name": "w2",
         "type": "Date",
         "font_name": "./examples/fonts/VERDANA.TTF",
-        "text": "Сегодняшняя дата: {day}.{month}.{year}",
+        "text": "Сегодняшняя дата: {day_z}.{month_z}.{year}",
         "xy": [0, 200],
         "stroke_width": 3,
         "stroke_fill": "green"
@@ -34,7 +34,7 @@
         "name": "w5",
         "type": "Date",
         "font_name": "./examples/fonts/VERDANA.TTF",
-        "text": "Время: {hour}:{minute}:{second}",
+        "text": "Время: {hour_z}:{minute_z}:{second_z}",
         "xy": [0, 425],
         "stroke_width": 1,
         "stroke_fill": "yellow"
@@ -43,7 +43,7 @@
         "name": "w6",
         "type": "Date",
         "font_name": "./examples/fonts/VERDANA.TTF",
-        "text": "Время -2 часа: {hour}:{minute}:{second}",
+        "text": "Время -2 часа: {hour_z}:{minute_z}:{second_z}",
         "shift": {"hour": -2},
         "xy": [0, 500],
         "stroke_width": 3,
