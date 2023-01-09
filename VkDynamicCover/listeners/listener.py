@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .subcriber import Subscriber
+from .subscriber import Subscriber
 import typing
 
 

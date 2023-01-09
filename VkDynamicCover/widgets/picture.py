@@ -31,7 +31,10 @@ class Picture(Widget, ABC):
 
     @resize.setter
     def resize(self, interval: list):
-        if interval and not isinstance(interval, list):
+        if not interval:
+            self._resize = None
+            return
+        if not isinstance(interval, list):
             raise exceptions.CreateTypeException("interval", list, type(interval))
         self._resize = Interval(interval[0], interval[1])
 
