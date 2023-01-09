@@ -9,7 +9,7 @@ from loguru import logger
 from . import DynamicCover, __version__
 
 MAIN_CONFIG_PATH = Path.cwd() / "main_config.json"
-WIDGET_CONFIG_PATH = Path.cwd() / "cover_config.json"
+COVER_CONFIG_PATH = Path.cwd() / "cover_config.json"
 
 
 def create_parser():
@@ -32,11 +32,11 @@ def create_parser():
         help=f"Абсолютный путь к файлу с основными настройками (по умолчанию {MAIN_CONFIG_PATH})"
     )
     parser.add_argument(
-        "-w",
-        "--widget_config",
+        "-c",
+        "--cover_config",
         type=Path,
-        default=WIDGET_CONFIG_PATH,
-        help=f"Абсолютный путь к файлу с описанием виджетов и их отображения (по умолчанию {WIDGET_CONFIG_PATH})"
+        default=COVER_CONFIG_PATH,
+        help=f"Абсолютный путь к файлу с описанием виджетов и их отображением (по умолчанию {COVER_CONFIG_PATH})"
     )
     parser.add_argument(
         "-d",
@@ -79,19 +79,19 @@ if __name__ == "__main__":
         VkDynamicCover {__version__}
         OS: {sys.platform}
         Main config path: {args.main_config}
-        Cover config path: {args.widget_config}
+        Cover config path: {args.cover_config}
         """
     )
 
     try:
         with args.main_config.open() as f:
             main_config: dict = json.load(f)
-        with args.widget_config.open() as f:
-            widget_config: dict = json.load(f)
+        with args.cover_config.open() as f:
+            cover_config: dict = json.load(f)
     except OSError as e:
         logger.error(e)
         sys.exit()
 
-    dynamic_cover = DynamicCover(main_config=main_config, cover_config=widget_config)
+    dynamic_cover = DynamicCover(main_config=main_config, cover_config=cover_config)
     dynamic_cover.start()
 

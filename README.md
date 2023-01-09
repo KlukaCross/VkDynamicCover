@@ -24,8 +24,17 @@ pip3 install ./VkDynamicCover
 
 ***
 ### Запуск
-``
+```
 python3 -m VkDynamicCover
-``
+```
 
-Для вывода доступных параметров введите ``python3 -m VkDynamicCover --help``
+Для вывода доступных параметров ввести ```python3 -m VkDynamicCover --help```
+
+***
+### Сборка и запуск с Docker контейнера
+```
+docker build --tag vkdynamiccover .
+docker run vkdynamiccover
+```
+
+При необходимости можно указать параметры запуска бота, например ```docker run vkdynamiccover -m ./config.json -c ./widgets.json -d```
