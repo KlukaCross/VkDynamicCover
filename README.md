@@ -31,7 +31,7 @@ python3 -m VkDynamicCover
 Для вывода доступных параметров ввести ```python3 -m VkDynamicCover --help```
 
 ***
-### Сборка и запуск с Docker контейнера
+### Сборка и запуск Docker контейнера
 ```
 docker build --tag vkdynamiccover .
 docker run vkdynamiccover
