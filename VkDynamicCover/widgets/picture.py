@@ -1,4 +1,5 @@
 import random
+import re
 
 import typing
 from PIL import Image
@@ -100,43 +101,51 @@ class UrlPicture(Picture):
         return DrawTools.get_image_from_url(self.url)
 
 
-class RandomPicture(Picture, ABC):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.random_formula = kwargs.get("random_formula")
-        self._random_function = None
-        self.set_random_function()
-
-    @property
-    def random_formula(self) -> str:
-        return self._random_formula
-
-    @random_formula.setter
-    def random_formula(self, random_formula: str):
-        if random_formula and not isinstance(random_formula, str):
-            raise exceptions.CreateTypeException("random_formula", str, type(random_formula))
-        self._random_formula = random_formula
-
+class RandomPicture(ABC):
+    @staticmethod
     @abstractmethod
-    def get_image(self) -> Image:
+    def random_function(pictures_number: int, **kwargs):
         raise NotImplementedError
-
-    def set_random_function(self):
-        if not self.random_formula:
-            self._random_function = lambda count: random.randint(0, count - 1)
-        else:
-            pass
 
 
 class RandomLocalPicture(RandomPicture, LocalPicture):
+    def __init__(self, **kwargs):
+        LocalPicture.__init__(self, **kwargs)
+
     def get_image(self):
-        return DrawTools.get_random_image_from_dir(path=Path(self.path), rand_func=self._random_function)
+        return DrawTools.get_random_image_from_dir(path=Path(self.path), rand_func=self.random_function)
+
+    @staticmethod
+    def random_function(pictures_number: int, **kwargs):
+        return random.randint(0, pictures_number)
 
 
 class RandomAlbumPicture(RandomPicture, UrlPicture):
+    ALBUM_REGEX = r"https://(m\.)?vk\.com/album-"
+
+    def __init__(self, **kwargs):
+        kwargs["url"] = kwargs.get("album_url")
+        UrlPicture.__init__(self, **kwargs)
+        self._user_id = kwargs.get("user_id")
+
+    @property
+    def user_id(self):
+        return self._user_id
+
+    @user_id.setter
+    def user_id(self, user_id: int):
+        self._user_id = user_id
+
     def get_image(self):
-        url = VkTools.get_random_image_url(group_id=self.group_id, album_id=self.url, rand_func=self._random_function)
+        group_id, album_id = re.sub(self.ALBUM_REGEX, "", self.url).split('_')
+        url = VkTools.get_random_image_from_album(group_id=int(group_id), album_id=int(album_id), user_id=self.user_id,
+                                                  rand_func=self.random_function)
         return DrawTools.get_image_from_url(url)
+
+    @staticmethod
+    def random_function(pictures_number: int, **kwargs):
+        user_id = kwargs.get("user_id")
+        return random.randint(0, pictures_number) if not user_id else user_id % pictures_number
 
 
 class VkAvatar(Picture):

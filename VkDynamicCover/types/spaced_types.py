@@ -2,5 +2,6 @@ from enum import Enum
 
 
 class SPACED_TYPES(Enum):
-    PRE_FORM = 0
-    POST_FORM = 1
+    PRE_FORM = "pre_form"
+    POST_FORM = "post_form"
+    WITH_START = "with_start"

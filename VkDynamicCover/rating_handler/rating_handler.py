@@ -5,17 +5,18 @@ from loguru import logger
 from vk_api.bot_longpoll import VkBotEventType
 
 from VkDynamicCover.text_formatting import TextCalculator, FormatterFunction
-from VkDynamicCover.types import MemberInfo
 from VkDynamicCover.listeners import Subscriber
 import typing
 
 from VkDynamicCover.types.interval import Interval
-from VkDynamicCover.types.member_info import EasyMemberInfo
-from VkDynamicCover.types.rating_info import RatingInfo
-from VkDynamicCover.types.update_rating_events import UpdateRatingEvents
+from VkDynamicCover.rating_handler.member_info import MemberInfo
+from VkDynamicCover.rating_handler.rating_info import RatingInfo
+from VkDynamicCover.types import UpdateRatingEvents, RatingEvent, RatingEventRepost, RatingEventComment, RatingEventLike, RatingEventPost
 from VkDynamicCover.utils import VkTools, TimeTools
+from VkDynamicCover.types import MemberInfoTypes
 
 RATING_UPDATE_SECONDS = 10
+REPOSTS_INFO_UPDATE_SECONDS = 120
 
 
 class RatingHandler(Subscriber):
@@ -33,13 +34,16 @@ class RatingHandler(Subscriber):
         self._last_subscriber_ids: typing.List[int] = []
         self._max_last_subs: int = 0
 
-        self._formatter_function = FormatterFunction(self.get_formula_member_info)
-
         self.scheduler = BackgroundScheduler()
         self.scheduler.add_job(
             func=self._update_ratings,
             trigger="interval",
             seconds=RATING_UPDATE_SECONDS
+        )
+        self.scheduler.add_job(
+            func=self._update_reposts_info,
+            trigger="interval",
+            seconds=REPOSTS_INFO_UPDATE_SECONDS
         )
         self.scheduler.start()
 
@@ -55,46 +59,56 @@ class RatingHandler(Subscriber):
 
     def update(self, event):
         logger.debug(f"Новое событие {event}")
+        resource_event: UpdateRatingEvents = UpdateRatingEvents.NONE
+        resource_time = 0
         if event.type == VkBotEventType.WALL_REPLY_NEW:
-            self._add_point(user_id=event.object["from_id"],
-                            event=UpdateRatingEvents.ADD_COMMENTED_POST,
-                            resource=event.object["post_id"],
-                            resource_unixtime=VkTools.get_post_time(group_id=self._group_id,
-                                                                    post_id=event.object["post_id"]))
+            user_id = event.object["from_id"]
+            resource_event = UpdateRatingEvents.ADD_POST_COMMENT
+            event_object = RatingEventComment(unixtime=VkTools.get_post_time(group_id=self._group_id,
+                                                                             post_id=event.object["post_id"]),
+                                              comment_id=event.object["id"],
+                                              object_id=event.object["post_id"])
 
         elif event.type in ("like_add", "like_remove"):
             if abs(event.object["object_owner_id"]) != self._group_id:  # чужие посты не считаются
                 return
             object_type = event.object["object_type"]
             if object_type == "post":
-                update_event = UpdateRatingEvents.ADD_LIKED_POST if event.type == "like_add" else UpdateRatingEvents.DEL_LIKED_POST
+                resource_event = UpdateRatingEvents.ADD_POST_LIKE if event.type == "like_add" else \
+                    UpdateRatingEvents.DEL_POST_LIKE
                 resource_time = VkTools.get_post_time(group_id=self._group_id, post_id=event.object["object_id"])
             elif object_type == "comment":
-                update_event = UpdateRatingEvents.ADD_LIKED_COMMENT if event.type == "like_add" else UpdateRatingEvents.DEL_LIKED_COMMENT
+                resource_event = UpdateRatingEvents.ADD_COMMENT_LIKE if event.type == "like_add" else \
+                    UpdateRatingEvents.DEL_COMMENT_LIKE
                 resource_time = VkTools.get_post_time(group_id=self._group_id, post_id=event.object["post_id"])
-            else:
-                return
-            self._add_point(user_id=event.object["liker_id"],
-                            event=update_event,
-                            resource=event.object["object_id"],
-                            resource_unixtime=resource_time)
+            event_object = RatingEventLike(unixtime=resource_time,
+                                           object_id=event.object["object_id"],
+                                           count=1 if resource_event in \
+                                   [UpdateRatingEvents.ADD_POST_LIKE, UpdateRatingEvents.ADD_COMMENT_LIKE] else -1)
+            user_id = event.object["liker_id"]
 
         elif event.type == VkBotEventType.WALL_REPOST:
-            post_id = event.object["copy_history"][0]["id"]
-            self._add_point(user_id=event.object["owner_id"],
-                            event=UpdateRatingEvents.ADD_REPOSTED_POST,
-                            resource=post_id,
-                            resource_unixtime=VkTools.get_post_time(group_id=self._group_id, post_id=post_id))
+            event_object = RatingEventRepost(unixtime=VkTools.get_post_time(group_id=self._group_id,
+                                                                            post_id=event.object["copy_history"][0]["id"]),
+                                             repost_id=event.object["id"],
+                                             post_id=event.object["copy_history"][0]["id"],
+                                             user_id=event.object["owner_id"])
+            resource_event = UpdateRatingEvents.ADD_REPOST
+            user_id = event.object["owner_id"]
 
-        if event.type == VkBotEventType.WALL_POST_NEW:
-            self._add_point(user_id=event.object.get("signer_id", -1),
-                            event=UpdateRatingEvents.ADD_RELEASED_POST,
-                            resource=event.object["id"],
-                            resource_unixtime=event.object["date"])
+        elif event.type == VkBotEventType.WALL_POST_NEW:
+            user_id = event.object.get("signer_id", -1)
+            resource_event = UpdateRatingEvents.ADD_POST
+            event_object = RatingEventPost(unixtime=event.object["date"], post_id=event.object["id"])
 
-        if event.type == VkBotEventType.GROUP_JOIN:
+        elif event.type == VkBotEventType.GROUP_JOIN:
             self.update_last_subs()
             return
+
+        else:
+            return
+
+        self._add_resource(user_id=user_id, event=resource_event, event_object=event_object)
 
     @logger.catch(reraise=False)
     def update_donates(self):
@@ -114,16 +128,6 @@ class RatingHandler(Subscriber):
     def add_track_last_subscribers(self, max_subs: int):
         self._max_last_subs = max(self._max_last_subs, max_subs)
 
-    @staticmethod
-    def get_formula_member_info(member_info: MemberInfo) -> typing.Dict[str, any]:
-        return {
-            "post_likes": len(member_info.like_posts),
-            "post_comments": len(member_info.comment_posts),
-            "reposts": len(member_info.repost_posts),
-            "posts": len(member_info.released_posts),
-            "donates": member_info.donates
-        }
-
     def _update_ratings(self):
         for interval, rating_info_list in self._rating_info.items():
             if self._is_reset_rating(interval):
@@ -132,6 +136,16 @@ class RatingHandler(Subscriber):
 
             for rating_info in rating_info_list:
                 self._update_rating(interval, rating_info)
+
+    def _update_reposts_info(self):
+        for members in self._ratings.values():
+            for member in members:
+                for repost in member.reposts.copy():
+                    info = VkTools.get_repost(repost.user_id, repost.resource_id)
+                    if not info:
+                        member.reposts.remove(repost)
+                    repost.likes = info['likes']['count']
+                    repost.views = info['views']['count']
 
     def _reset_rating(self, interval: Interval):
         rating_info_list = self._rating_info.get(interval)
@@ -144,16 +158,11 @@ class RatingHandler(Subscriber):
 
     def _update_rating(self, interval: Interval, rating_info: RatingInfo):
         rating_info.points.clear()
-        for member_info in self._ratings[interval].get_all():
-            rating_info.points[member_info.member_id] = self._calc_points(point_formula=rating_info.point_formula,
-                                                                          member_info=member_info)
-
-    def _calc_points(self, member_info: MemberInfo, point_formula: str) -> EasyMemberInfo:
-        res = member_info.get_easy_info()
-        res.points = int(TextCalculator(self._formatter_function).get_format_text(text=point_formula,
-                                                                              member_info=member_info))
-
-        return res
+        for member_info in self._ratings[interval]:
+            res: typing.Dict[str, int] = member_info.get_info()
+            points = TextCalculator(FormatterFunction(lambda x: x)).get_format_text(rating_info.point_formula, res)
+            res[MemberInfoTypes.POINTS.value] = int(points)
+            rating_info.points[member_info.member_id] = res
 
     def _init_rating(self, interval: Interval):
         logger.info("Инициализируется рейтинг...")
@@ -164,26 +173,32 @@ class RatingHandler(Subscriber):
             likes = VkTools.get_post_liker_ids(group_id=self._group_id, post_id=p["id"],
                                                likes_count=p["likes"]["count"])
             comments = VkTools.get_post_comments(group_id=self._group_id, post_id=p["id"],
-                                                 comments_count=p["comments"]["count"])
+                                                 comments_count=p["comments"]["count"], need_likes=True)
             reposts = VkTools.get_post_reposts(group_id=self._group_id, post_id=p["id"],
                                                reposts_count=p["reposts"]["count"])
 
+            self._add_resource(user_id=p.get("signer_id", -1),
+                               event=UpdateRatingEvents.ADD_POST,
+                               event_object=RatingEventPost(unixtime=p['date'], post_id=p['id']))
+
             for i in likes:
-                self._add_point(user_id=i, event=UpdateRatingEvents.ADD_LIKED_POST, resource=p['id'],
-                                resource_unixtime=p['date'])
+                self._add_resource(user_id=i, event=UpdateRatingEvents.ADD_POST_LIKE,
+                                   event_object=RatingEventLike(object_id=p['id'], unixtime=p['date'], count=1))
 
             for i in comments:
-                self._add_point(user_id=i["from_id"], event=UpdateRatingEvents.ADD_COMMENTED_POST, resource=p['id'],
-                                resource_unixtime=p['date'])
+                likes = i["likes"]["count"]
+                self._add_resource(user_id=i["from_id"], event=UpdateRatingEvents.ADD_POST_COMMENT,
+                                   event_object=RatingEventComment(comment_id=i['id'], object_id=p['id'], likes=likes,
+                                                                   unixtime=p['date']))
 
             for i in reposts:
-                self._add_point(user_id=i["owner_id"], event=UpdateRatingEvents.ADD_REPOSTED_POST, resource=p['id'],
-                                resource_unixtime=p['date'])
+                likes = i['likes']['count']
+                views = i['views']['count'] if 'views' in i else 0
+                self._add_resource(user_id=i["owner_id"], event=UpdateRatingEvents.ADD_REPOST,
+                                   event_object=RatingEventRepost(repost_id=i['id'], post_id=p['id'], likes=likes,
+                                                                  views=views, unixtime=p['date'], user_id=i["owner_id"]))
 
-            self._add_point(user_id=p.get("signer_id", -1), event=UpdateRatingEvents.ADD_RELEASED_POST,
-                            resource=p['id'], resource_unixtime=p['date'])
-
-        self.update_donates()
+        #self.update_donates()
 
         self.update_last_subs()
 
@@ -193,34 +208,17 @@ class RatingHandler(Subscriber):
     def _is_reset_rating(interval: Interval) -> bool:
         return datetime.datetime.now().timestamp() > interval.to
 
-    def _add_point(self, user_id: int, event: UpdateRatingEvents, resource: int, resource_unixtime: int) -> bool:
+    def _add_resource(self, user_id: int, event: UpdateRatingEvents, event_object) -> bool:
         if user_id < 0:
             return True
         for interval, members in self._ratings.items():
-            if resource_unixtime < interval.fr or resource_unixtime > interval.to:
+            if event_object.unixtime < interval.fr or event_object.unixtime > interval.to:
                 continue
             member: MemberInfo = members.get_member(user_id)
             if not member:
-                member = members.add(user_id)
-            if event == UpdateRatingEvents.ADD_LIKED_POST:
-                member.like_posts.append(resource)
-            elif event == UpdateRatingEvents.ADD_LIKED_COMMENT:
-                member.like_comments.append(resource)
-            elif event == UpdateRatingEvents.ADD_DONATE:
-                member.donates += resource
-            elif event == UpdateRatingEvents.ADD_RELEASED_POST:
-                member.released_posts.append(resource)
-            elif event == UpdateRatingEvents.ADD_REPOSTED_POST:
-                member.repost_posts.append(resource)
-            elif event == UpdateRatingEvents.ADD_COMMENTED_COMMENT:
-                member.comment_comments.append(resource)
-            elif event == UpdateRatingEvents.ADD_COMMENTED_POST:
-                member.comment_posts.append(resource)
-            elif event == UpdateRatingEvents.DEL_LIKED_POST:
-                member.like_posts.remove(resource)
-            elif event == UpdateRatingEvents.DEL_LIKED_COMMENT:
-                member.like_comments.remove(resource)
-            logger.debug(f"Пользователю {user_id} добавлен ресурс {resource} для {event.name}")
+                members.add(user_id)
+            members.add_resource(user_id, event, event_object)
+            logger.debug(f"Пользователю {user_id} добавлен ресурс для {event.name}")
         return True
 
 
@@ -240,3 +238,53 @@ class RatingMembers:
 
     def get_all(self) -> typing.List[MemberInfo]:
         return list(self._rating.values())
+
+    def add_resource(self, user_id: int, event: UpdateRatingEvents, event_object):
+        member = self.get_member(user_id)
+        if event == UpdateRatingEvents.ADD_POST_LIKE:
+            member.add(MemberInfoTypes.POST_LIKES, event_object)
+            self._add_post_like(event_object)
+        elif event == UpdateRatingEvents.ADD_COMMENT_LIKE:
+            member.add(MemberInfoTypes.COMMENT_LIKES, event_object)
+            self._add_comment_like(event_object)
+        elif event == UpdateRatingEvents.ADD_DONATE:
+            member.add(MemberInfoTypes.DONATES, event_object)
+        elif event == UpdateRatingEvents.ADD_POST:
+            member.add(MemberInfoTypes.POSTS, event_object)
+        elif event == UpdateRatingEvents.ADD_REPOST:
+            member.add(MemberInfoTypes.REPOSTS, event_object)
+        elif event == UpdateRatingEvents.ADD_COMMENT_COMMENT:
+            member.add(MemberInfoTypes.COMMENT_COMMENTS)
+        elif event == UpdateRatingEvents.ADD_POST_COMMENT:
+            member.add(MemberInfoTypes.POST_COMMENTS, event_object)
+            self._add_post_comment(event_object)
+        elif event == UpdateRatingEvents.DEL_POST_LIKE:
+            member.remove(MemberInfoTypes.POST_LIKES, event_object)
+            self._add_post_like(event_object)
+        elif event == UpdateRatingEvents.DEL_COMMENT_LIKE:
+            member.remove(MemberInfoTypes.POST_COMMENTS, event_object)
+            self._add_comment_like(event_object)
+
+    def __iter__(self):
+        return self._rating.values().__iter__()
+
+    def _add_post_like(self, event_object: RatingEventLike):
+        for m in self._rating.values():
+            pst = m.get_post(event_object.object_id)
+            if pst:
+                pst.likes += event_object.count
+                break
+
+    def _add_comment_like(self, event_object: RatingEventLike):
+        for m in self._rating.values():
+            pst = m.get_comment(event_object.object_id)
+            if pst:
+                pst.likes += event_object.count
+                break
+
+    def _add_post_comment(self, event_object: RatingEventComment):
+        for m in self._rating.values():
+            pst = m.get_post(event_object.object_id)
+            if pst:
+                pst.comments += 1
+                break

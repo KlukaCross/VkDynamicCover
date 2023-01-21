@@ -44,11 +44,15 @@ class Profile(Widget):
         self._avatar = avatar
 
 
-class UserInfo(FormattingText):
+class UserInfo(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.text: FormattingText = kwargs.get("text")
         self.user_id = kwargs.get("user_id")
-        self.formatter = TextInserter(FormatterFunction(UserInfo.get_user_info, user_id=self.user_id))
+        self.text.formatter = TextInserter(FormatterFunction(UserInfo.get_user_info, user_id=self.user_id))
+
+    def draw(self, surface):
+        return self.text.draw(surface)
 
     @staticmethod
     def get_user_info(user_id: int) -> typing.Dict[str, str]:
@@ -64,3 +68,11 @@ class UserInfo(FormattingText):
         if user_id and not isinstance(user_id, int):
             raise exceptions.CreateTypeException("user_id", int, type(user_id))
         self._user_id = user_id
+
+    @property
+    def formatter(self):
+        return self.text.formatter
+
+    @formatter.setter
+    def formatter(self, formatter):
+        self.text.formatter = formatter

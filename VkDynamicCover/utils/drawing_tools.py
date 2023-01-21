@@ -1,4 +1,5 @@
 import random
+import typing
 
 from PIL import Image, ImageFont, ImageDraw
 import io
@@ -54,10 +55,10 @@ class DrawingTools:
         return font.getsize(text)
 
     @staticmethod
-    def get_byte_image(surface: Image) -> bytes:
+    def get_bytesio_image(surface: Image) -> io.BytesIO:
         img_bytes = io.BytesIO()
         surface.save(img_bytes, format="PNG")
-        return img_bytes.getvalue()
+        return img_bytes
 
     @staticmethod
     def get_image_from_url(url: str) -> Image:
@@ -87,14 +88,22 @@ class DrawingTools:
         return image.resize(resize)
 
     @staticmethod
-    def get_random_image_from_dir(path: Path, rand_func=lambda count: random.randint(0, count - 1)) -> Image:
+    def get_random_image_from_dir(path: Path, rand_func: typing.Callable[[int, dict], int], **kwargs) -> Image:
         if not path.is_dir():
             logger.warning(f"{path} не является директорией")
             return
         lst = list(filter(lambda x: x.suffix in [".png", ".jpg", ".jpeg", ".gif"], path.glob("*.*")))
-        rand_c = rand_func(len(lst))
-        rand_pic_path = lst[rand_c]
+        rand_c = rand_func(len(lst), **kwargs)
+        rand_pic_path = lst[rand_c%len(lst)+1]
         return DrawingTools.get_image_from_path(rand_pic_path)
+
+    @staticmethod
+    def save_image(image: Image, name: str):
+        image.save(name, "PNG")
+
+    @staticmethod
+    def show_image(image: Image):
+        image.show()
 
 
 DrawTools = DrawingTools()

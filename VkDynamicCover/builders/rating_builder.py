@@ -3,7 +3,7 @@ from VkDynamicCover.builders.profile_builder import ProfileBuilder
 from VkDynamicCover.builders.widget_builder import WidgetBuilder
 from VkDynamicCover.rating_handler.rating_handler import RatingHandler
 from VkDynamicCover.listeners import LongpollListener
-from VkDynamicCover.types.rating_info import RatingInfo
+from VkDynamicCover.rating_handler.rating_info import RatingInfo
 from VkDynamicCover.widgets.rating import Rating, RatingPlace
 
 

@@ -18,7 +18,7 @@ COVER_HEIGHT = 768
 SLEEP_SECONDS = 60
 
 VERSION_MAIN_CONFIG = "0.1"
-VERSION_COVER_CONFIG = "0.1"
+VERSION_COVER_CONFIG = "0.2"
 
 
 class DynamicCover:
@@ -60,16 +60,19 @@ class WidgetCreator:
         self._widget_list = widget_list
 
     def create_widgets(self) -> typing.List[widget.Widget]:
-        res_list = [self.create_widget(**widget_info) for widget_info in self._widget_list]
+        res_list = []
+        for widget_info in self._widget_list:
+            w = self.create_widget(**widget_info)
+            if w:
+                res_list.append(w)
 
         return res_list
 
-    def create_widget(self, **kwargs) -> widget.Widget:
+    def create_widget(self, **kwargs) -> widget.Widget or None:
         tp = kwargs.get("type")
-        builder = None
         if tp == text.Text.__name__:
             builder = builders.TextBuilder()
-        elif tp == picture.Picture.__name__:
+        elif tp in [picture.Picture.__name__, picture.VkAvatar.__name__, picture.RandomPicture.__name__]:
             builder = builders.PictureBuilder()
         elif tp == date.Date.__name__:
             builder = builders.DateBuilder()
@@ -81,11 +84,14 @@ class WidgetCreator:
             builder = builders.ProfileBuilder()
         else:
             logger.warning(f"Неизвестный тип виджета - {tp}")
+            return
 
         res_kwargs = {}
         res_kwargs.update(self._main_config)
         res_kwargs.update(kwargs)
         res = builder.create(**res_kwargs)
+        if not res:
+            raise exceptions.CreateException(f"failed to create widget with params {res_kwargs}")
         logger.debug(f"Create widget {res}")
         return res
 
@@ -104,9 +110,13 @@ class CoverDrawing:
     def update(self):
         self._surface = self.draw(self._surface)
 
-        VkTools.push_cover(surface_bytes=DrawTools.get_byte_image(self._surface),
-                           surface_width=self._surface.width, surface_height=self._surface.height,
+        photo = DrawTools.get_bytesio_image(self._surface)
+
+        VkTools.push_cover(surface_bytes=photo,
+                           surface_width=self._surface.width,
+                           surface_height=self._surface.height,
                            group_id=self._group_id)
+        photo.close()
         logger.info(f"Обложка успешно обновлена")
 
     def draw(self, surface: Image) -> Image:

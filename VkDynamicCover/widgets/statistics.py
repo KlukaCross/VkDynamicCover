@@ -1,6 +1,6 @@
 import typing
 
-from .. import text_formatting as formatting
+from VkDynamicCover import text_formatting as formatting
 from .text import FormattingText
 from .widget import Widget
 from VkDynamicCover.utils import VkTools

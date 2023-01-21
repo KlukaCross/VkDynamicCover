@@ -2,14 +2,14 @@ import typing
 from functools import reduce
 
 from VkDynamicCover.widgets.profile import Profile, UserInfo
+from VkDynamicCover.widgets.picture import VkAvatar, RandomAlbumPicture
 
 from .text import Text
 from .widget import Widget
 from VkDynamicCover.text_formatting import FormatterFunction
 from VkDynamicCover.text_formatting import TextInserter
-from VkDynamicCover.types.member_info import EasyMemberInfo
-from VkDynamicCover.types.rating_info import RatingInfo
-from VkDynamicCover.types import exceptions
+from VkDynamicCover.rating_handler.rating_info import RatingInfo
+from VkDynamicCover.types import exceptions, MemberInfoTypes
 
 
 class Rating(Widget):
@@ -24,7 +24,7 @@ class Rating(Widget):
         if self.text:
             surface = self.text.draw(surface)
         sort_values = list(self.rating_info.points.values())
-        sort_values.sort(key=lambda x: -x.points)
+        sort_values.sort(key=lambda x: -x["points"])
         min_len = min(len(self.places), len(sort_values))
         for i in range(min_len):
             self.places[i].update_member_info(sort_values[i])
@@ -65,28 +65,23 @@ class Rating(Widget):
 class RatingPlace(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.easy_member_info = None
+        self.member_info = {}
         self.profile = kwargs.get("profile")
         self.profile.info.formatter = TextInserter(FormatterFunction(function=self.get_place_info))
 
     def draw(self, surface):
-        if self.easy_member_info is not None:
+        if len(self.member_info) != 0:
             surface = self.profile.draw(surface)
         return surface
 
-    def update_member_info(self, member_info: EasyMemberInfo):
-        self.easy_member_info = member_info
+    def update_member_info(self, member_info: typing.Dict[str, int]):
+        self.member_info = member_info
+        if hasattr(self.profile.avatar, "user_id"):
+            self.profile.avatar.user_id = self.member_info[MemberInfoTypes.MEMBER_INFO.value]
 
     def get_place_info(self) -> typing.Dict[str, str]:
-        dct = UserInfo.get_user_info(self.easy_member_info.member_id)
-        dct.update({
-            "likes": self.easy_member_info.post_likes,
-            "comments": self.easy_member_info.post_comments,
-            "reposts": self.easy_member_info.reposts,
-            "points": self.easy_member_info.points,
-            "posts": self.easy_member_info.posts,
-            "donates": self.easy_member_info.donates
-        })
+        dct = UserInfo.get_user_info(self.member_info[MemberInfoTypes.MEMBER_INFO.value])
+        dct.update(self.member_info)
         return dct
 
     @property

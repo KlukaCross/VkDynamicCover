@@ -1,5 +1,5 @@
 {
-  "VERSION": "0.1",
+  "VERSION": "0.2",
   "show": [["w1", "time", "w2"]],
   "widgets": [
       {
@@ -19,36 +19,30 @@
         "name": "w2",
         "type": "Rating",
         "period": "week",
+        "group_id": 132505086,
         "point_formula": "{post_likes}+{post_comments}*2",
         "places": [
           {
             "xy": [300, 300],
-            "text": "1) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
-            "fill": "white",
-            "font_name": "./examples/fonts/VERDANA.TTF"
-          },
-          {
-            "xy": [300, 350],
-            "text": "2) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "text": "1) {first_name} {last_name} [hspace(10)] {post_likes} лайков [hspace(10)] {post_comments} комментов [hspace(10)] {points} очков",
             "space_type": "post_form",
+            "avatar": {"type": "VkAvatar", "xy": [200, 250], "resize": [100, 100]},
             "fill": "white",
             "font_name": "./examples/fonts/VERDANA.TTF"
           },
           {
             "xy": [300, 400],
-            "text": "3) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
-            "fill": "white",
-            "font_name": "./examples/fonts/VERDANA.TTF"
-          },
-          {
-            "xy": [300, 450],
-            "text": "4) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "text": "2) {first_name} {last_name} [hspace(500)] {post_likes} лайков [hspace(50)] {post_comments} комментов [hspace(50)] {points} очков",
+            "avatar": {"type": "RandomPicture", "xy": [200, 350], "resize": [100, 100], "album_url": "https://vk.com/album-188934004_275577666"},
+            "space_type": "pre_form",
             "fill": "white",
             "font_name": "./examples/fonts/VERDANA.TTF"
           },
           {
             "xy": [300, 500],
-            "text": "5) {first_name} {last_name} | {likes} лайков | {comments} комментов | {points} очков",
+            "text": "3) {first_name} {last_name} [hspace(550)] {post_likes} лайков [hspace(250)] {post_comments} комментов [hspace(350)] {points} очков",
+            "avatar": {"type": "Picture", "xy": [200, 450], "resize": [100, 100], "path": "./examples/img/bg.png"},
+            "space_type": "with_start",
             "fill": "white",
             "font_name": "./examples/fonts/VERDANA.TTF"
           }

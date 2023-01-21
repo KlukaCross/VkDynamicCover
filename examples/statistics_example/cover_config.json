@@ -1,5 +1,5 @@
 {
-  "VERSION": "0.1",
+  "VERSION": "0.2",
   "show": [["time","w2"]],
   "widgets":
     [{

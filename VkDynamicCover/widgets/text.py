@@ -234,7 +234,7 @@ class SpacedText(FormattingText):
 
     def draw(self, surface):
         def draw_text(txt):
-            if self.space_type == SPACED_TYPES.PRE_FORM:
+            if self.space_type == SPACED_TYPES.PRE_FORM.value:
                 txt = self.formatter.get_format_text(txt)
             DrawTools.draw_text(surface=surface, text=txt, font_name=self.font_name, font_size=self.font_size,
                                 fill=self.fill, xy=(self.xy.x + shift_xy[0], self.xy.y + shift_xy[1]),
@@ -243,7 +243,16 @@ class SpacedText(FormattingText):
                                 direction=self.direction, stroke_width=self.stroke_width,
                                 stroke_fill=self.stroke_fill)
 
-        text = self.formatter.get_format_text(self.text) if self.space_type == SPACED_TYPES.POST_FORM else self.text
+        def shift_x():
+            res = int(re.search(r'\d+', h_match[h]).group(0))
+            if self.space_type != SPACED_TYPES.WITH_START.value:
+                res += DrawTools.get_text_size(re.sub(r'\{.*}', "", text[from_ind:ind]), self.font_name, self.font_size)[0]
+            return res
+
+        def shift_y():
+            return int(re.search(r'\d+', v_match[v]).group(0))
+
+        text = self.text if self.space_type == SPACED_TYPES.PRE_FORM.value else self.formatter.get_format_text(self.text)
         v_match = re.findall(r'\[vspace\(\d+\)]', text)
         h_match = re.findall(r'\[hspace\(\d+\)]', text)
         shift_xy = [0, 0]
@@ -251,48 +260,38 @@ class SpacedText(FormattingText):
         from_ind = 0
         v = h = 0
         while v < len(v_match) and h < len(h_match):
-            v_ind = text.find(v_match[v], ind+1)
-            h_ind = text.find(h_match[h], ind+1)
+            v_ind = text.find(v_match[v], ind + 1)
+            h_ind = text.find(h_match[h], ind + 1)
             ind = min(v_ind, h_ind)
             draw_text(text[from_ind:ind])
             if ind == v_ind:
-                shift_xy[1] += int(re.search(r'\d+', v_match[v]).group(0))
+                shift_xy[1] += shift_y()
                 from_ind = ind + len(v_match[v])
                 v += 1
             else:
-                shift_xy[0] += int(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind]) + \
-                               DrawTools.get_text_size(text[from_ind:ind], self.font_name, self.font_size)[0]
+                shift_xy[0] += shift_x()
                 from_ind = ind + len(h_match[h])
                 h += 1
 
         while v < len(v_match):
-            v_ind = text.find(v_match[v], ind+1)
+            v_ind = text.find(v_match[v], ind + 1)
             ind = v_ind
             draw_text(text[from_ind:ind])
-            shift_xy[1] += int(re.search(r'\d+', v_match[v]).group(0))
+            shift_xy[1] += shift_y()
             from_ind = ind + len(v_match[v])
             v += 1
 
         while h < len(h_match):
-            h_ind = text.find(h_match[h], ind+1)
+            h_ind = text.find(h_match[h], ind + 1)
             ind = h_ind
             draw_text(text[from_ind:ind])
-            shift_xy[0] += int(re.search(r'\d+', h_match[h]).group(0)) - self._len_keys(text[from_ind:ind]) + \
-                               DrawTools.get_text_size(text[from_ind:ind], self.font_name, self.font_size)[0]
+            shift_xy[0] += shift_x()
             from_ind = ind + len(h_match[h])
             h += 1
 
         draw_text(text[from_ind:])
 
         return surface
-
-    def _len_keys(self, text: str) -> int:
-        match = re.search(r'\{.*}', text)
-        res = 0
-        if not match:
-            return res
-        reduce(lambda x: DrawTools.get_text_size(x, self.font_name, self.font_size)[0], match.groups(), res)
-        return res
 
     @property
     def space_type(self) -> str:
@@ -302,7 +301,7 @@ class SpacedText(FormattingText):
     def space_type(self, spaced_type: str):
         if spaced_type and not isinstance(spaced_type, str):
             raise exceptions.CreateTypeException("space_type", str, type(spaced_type))
-        names = [i.name.lower() for i in list(SPACED_TYPES)]
+        names = [i.value for i in list(SPACED_TYPES)]
         if spaced_type not in names:
             raise exceptions.CreateValueException("space_type", names, spaced_type)
         self._spaced_type = spaced_type
