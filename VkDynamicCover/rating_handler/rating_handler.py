@@ -52,9 +52,9 @@ class RatingHandler(Subscriber):
         if interval not in self._ratings:
             self._ratings[interval] = RatingMembers()
             self._rating_info[interval] = [rating_info]
+            self._init_rating(interval)
         else:
             self._rating_info[interval].append(rating_info)
-        self._init_rating(interval)
         self._update_rating(interval, rating_info)
 
     def update(self, event):
