@@ -161,7 +161,7 @@ class RatingHandler(Subscriber):
         for member_info in self._ratings[interval]:
             res: typing.Dict[str, int] = member_info.get_info()
             points = TextCalculator(FormatterFunction(lambda x: x)).get_format_text(rating_info.point_formula, res)
-            res[MemberInfoTypes.POINTS.value] = int(points)
+            res[MemberInfoTypes.POINTS.value] = int(float(points))
             rating_info.points[member_info.member_id] = res
 
     def _init_rating(self, interval: Interval):
@@ -192,7 +192,7 @@ class RatingHandler(Subscriber):
                                                                    unixtime=p['date']))
 
             for i in reposts:
-                likes = i['likes']['count']
+                likes = i['likes']['count'] if 'likes' in i else 0
                 views = i['views']['count'] if 'views' in i else 0
                 self._add_resource(user_id=i["owner_id"], event=UpdateRatingEvents.ADD_REPOST,
                                    event_object=RatingEventRepost(repost_id=i['id'], post_id=p['id'], likes=likes,
@@ -253,8 +253,8 @@ class RatingMembers:
             member.add(MemberInfoTypes.POSTS, event_object)
         elif event == UpdateRatingEvents.ADD_REPOST:
             member.add(MemberInfoTypes.REPOSTS, event_object)
-        elif event == UpdateRatingEvents.ADD_COMMENT_COMMENT:
-            member.add(MemberInfoTypes.COMMENT_COMMENTS)
+        # elif event == UpdateRatingEvents.ADD_COMMENT_COMMENT:
+        #     member.add(MemberInfoTypes.COMMENT_COMMENTS, event_object)
         elif event == UpdateRatingEvents.ADD_POST_COMMENT:
             member.add(MemberInfoTypes.POST_COMMENTS, event_object)
             self._add_post_comment(event_object)

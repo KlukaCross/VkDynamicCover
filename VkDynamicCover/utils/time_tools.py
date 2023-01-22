@@ -53,6 +53,21 @@ class _TimeTools:
         return dtime
 
     @staticmethod
+    def get_shift_and_format_time(shift, t=datetime.datetime.now()) -> typing.Dict[str, int]:
+        t = TimeTools.shift_time(t, shift)
+        return TimeTools.format_time(t)
+
+    @staticmethod
+    def set_default_shift(shift: dict):
+        shift.setdefault("year", 0)
+        shift.setdefault("month", 0)
+        shift.setdefault("week", 0)
+        shift.setdefault("day", 0)
+        shift.setdefault("hour", 0)
+        shift.setdefault("minute", 0)
+        shift.setdefault("second", 0)
+
+    @staticmethod
     def get_period_interval(period: str) -> (int, int):
         tmp = datetime.datetime.now()
         if period == "day":

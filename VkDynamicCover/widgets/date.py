@@ -14,24 +14,12 @@ class Date(Widget):
         super().__init__(**kwargs)
 
         self.shift = kwargs.get("shift", {})
-        self.shift.setdefault("year", 0)
-        self.shift.setdefault("month", 0)
-        self.shift.setdefault("week", 0)
-        self.shift.setdefault("day", 0)
-        self.shift.setdefault("hour", 0)
-        self.shift.setdefault("minute", 0)
-        self.shift.setdefault("second", 0)
+        TimeTools.set_default_shift(self.shift)
 
         self.text = kwargs.get("text")
 
     def draw(self, surface):
         return self.text.draw(surface)
-
-    @staticmethod
-    def get_format_text(shift) -> typing.Dict[str, str]:
-        t = datetime.datetime.now()
-        t = TimeTools.shift_time(t, shift)
-        return TimeTools.format_time(t)
 
     @property
     def text(self) -> FormattingText:
@@ -43,7 +31,7 @@ class Date(Widget):
             raise exceptions.CreateTypeException("text", FormattingText, type(text))
         self._text = text
         if self._text:
-            self._text.formatter = TextInserter(FormatterFunction(self.get_format_text, shift=self.shift))
+            self._text.formatter = TextInserter(FormatterFunction(TimeTools.get_shift_and_format_time, shift=self.shift))
 
     @property
     def shift(self) -> dict:

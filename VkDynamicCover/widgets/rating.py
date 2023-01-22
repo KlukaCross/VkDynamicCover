@@ -10,6 +10,7 @@ from VkDynamicCover.text_formatting import FormatterFunction
 from VkDynamicCover.text_formatting import TextInserter
 from VkDynamicCover.rating_handler.rating_info import RatingInfo
 from VkDynamicCover.types import exceptions, MemberInfoTypes
+from VkDynamicCover.utils import TimeTools
 
 
 class Rating(Widget):
@@ -19,6 +20,14 @@ class Rating(Widget):
         self.text = kwargs.get("Text", None)
         self.places = kwargs.get("places")
         self.rating_info = kwargs.get("rating_info")
+
+        if hasattr(self.text, "formatter"):
+            shift = kwargs.get("shift", {})
+            TimeTools.set_default_shift(shift)
+            date_from = kwargs.get("date_from", "{day_z}.{month_z}.{year}")
+            date_to = kwargs.get("date_from", "{day_z}.{month_z}.{year}")
+            self.text.formatter = TextInserter(FormatterFunction(TimeTools.get_shift_and_format_time, shift=shift,
+                                                                 date_from=date_from, date_to=date_to))
 
     def draw(self, surface):
         if self.text:
@@ -30,6 +39,13 @@ class Rating(Widget):
             self.places[i].update_member_info(sort_values[i])
         surface = reduce(lambda x, y: y.draw(x), self.places, surface)
         return surface
+
+    @staticmethod
+    def format_text(shift: dict, date_from: str, date_to: str) -> typing.Dict[str, str]:
+        interval = TimeTools.get_period_interval()
+        d_fr = date_from.format(TimeTools.get_shift_and_format_time(shift=shift, t=interval.fr))
+        d_to = date_to.format(TimeTools.get_shift_and_format_time(shift=shift, t=interval.to))
+        return {"date_from": d_fr, "date_to": d_to}
 
     @property
     def places(self) -> typing.List["RatingPlace"]:

@@ -1,4 +1,6 @@
 import typing
+from functools import reduce
+
 from VkDynamicCover.types import MemberInfoTypes, ResourcePost, ResourceRepost, ResourceComment
 
 
@@ -23,10 +25,34 @@ class MemberInfo:
         return self._reposts
 
     def get_info(self) -> typing.Dict[str, int]:
+        views_of_reposts = 0
+        likes_of_reposts = 0
+        for i in self.reposts:
+            views_of_reposts += i.views
+            likes_of_reposts += i.likes
+
+        likes_of_comments = 0
+        for i in self._post_comments:
+            likes_of_comments += i.likes
+
+        likes_of_posts = 0
+        comments_of_posts = 0
+        for i in self._released_posts:
+            likes_of_posts += i.likes
+            comments_of_posts += i.comments
+
         res = {MemberInfoTypes.MEMBER_INFO.value: self._member_id,
-               MemberInfoTypes.COMMENT_LIKES.value: self._comment_likes, MemberInfoTypes.POST_LIKES.value: self._post_likes,
-               MemberInfoTypes.POST_COMMENTS.value: len(self._post_comments), MemberInfoTypes.REPOSTS.value: len(self._reposts),
-               MemberInfoTypes.POSTS.value: len(self._released_posts), MemberInfoTypes.DONATES.value: self._donates}
+               MemberInfoTypes.COMMENT_LIKES.value: self._comment_likes,
+               MemberInfoTypes.POST_LIKES.value: self._post_likes,
+               MemberInfoTypes.POST_COMMENTS.value: len(self._post_comments),
+               MemberInfoTypes.REPOSTS.value: len(self._reposts),
+               MemberInfoTypes.POSTS.value: len(self._released_posts),
+               MemberInfoTypes.DONATES.value: self._donates,
+               MemberInfoTypes.VIEWS_OF_REPOSTS.value: views_of_reposts,
+               MemberInfoTypes.LIKES_OF_REPOSTS.value: likes_of_reposts,
+               MemberInfoTypes.LIKES_OF_COMMENTS.value: likes_of_comments,
+               MemberInfoTypes.LIKES_OF_POSTS.value: likes_of_posts,
+               MemberInfoTypes.COMMENTS_OF_POSTS.value: comments_of_posts}
         return res
 
     def add(self, tp: MemberInfoTypes, event_object):

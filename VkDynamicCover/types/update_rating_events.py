@@ -28,7 +28,7 @@ class RatingEventLike(RatingEvent):
 
 
 class RatingEventComment(RatingEvent):
-    def __init__(self, unixtime, comment_id, object_id, likes):
+    def __init__(self, unixtime, comment_id, object_id, likes=0):
         super().__init__(unixtime)
         self.comment_id = comment_id
         self.object_id = object_id
