@@ -60,12 +60,8 @@ class _VkTools(metaclass=MetaSingleton):
 
     @api_retry
     def push_cover(self, surface_bytes: io.BytesIO, surface_width: int, surface_height: int, group_id: int):
-        url = self._vk_meth.photos.getOwnerCoverPhotoUploadServer(group_id=group_id,
-                                                                  crop_x=0, crop_y=0,
-                                                                  crop_x2=surface_width,
-                                                                  crop_y2=surface_height)["upload_url"]
-        pht = requests.post(url, files={"photo": surface_bytes.getvalue()})
-        self._vk_meth.photos.saveOwnerCoverPhoto(**pht.json())
+        self._vk_upload.photo_cover(photo=surface_bytes, group_id=group_id, crop_x=0, crop_y=0,
+                                    crop_x2=surface_width, crop_y2=surface_height)
 
     @api_retry
     def get_random_image_from_album(self, group_id: int, album_id: str, rand_func: typing.Callable[[int, dict], int],
@@ -145,8 +141,8 @@ class _VkTools(metaclass=MetaSingleton):
                 yield v
 
     @api_retry
-    def get_comment_likes(self, comment_id: int, user_id: int):
-        return self._vk_meth.likes.getList(type="comment", owner_id=user_id, item_id=comment_id)["count"]
+    def get_comment_likes(self, comment_id: int, owner_id: int):
+        return self._vk_meth.likes.getList(type="comment", owner_id=owner_id, item_id=comment_id)
 
     @api_retry
     def get_post_comments(self, group_id: int, post_id: int, comments_count: int, need_likes=False):

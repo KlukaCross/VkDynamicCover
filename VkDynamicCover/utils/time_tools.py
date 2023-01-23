@@ -53,9 +53,9 @@ class _TimeTools:
         return dtime
 
     @staticmethod
-    def get_shift_and_format_time(shift, t=datetime.datetime.now()) -> typing.Dict[str, int]:
-        t = TimeTools.shift_time(t, shift)
-        return TimeTools.format_time(t)
+    def get_shift_and_format_time(shift, dtime=datetime.datetime.now()) -> typing.Dict[str, int]:
+        dtime = TimeTools.shift_time(dtime, shift)
+        return TimeTools.format_time(dtime)
 
     @staticmethod
     def set_default_shift(shift: dict):

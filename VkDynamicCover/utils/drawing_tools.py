@@ -57,7 +57,8 @@ class DrawingTools:
     @staticmethod
     def get_bytesio_image(surface: Image) -> io.BytesIO:
         img_bytes = io.BytesIO()
-        surface.save(img_bytes, format="PNG")
+        surface.save(img_bytes, format='png')
+        img_bytes.seek(0)
         return img_bytes
 
     @staticmethod

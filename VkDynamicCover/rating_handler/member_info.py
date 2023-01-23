@@ -62,11 +62,14 @@ class MemberInfo:
             self._comment_likes += event_object.count
         elif tp == MemberInfoTypes.POST_COMMENTS:
             self._post_comments.append(ResourceComment(comment_id=event_object.comment_id,
-                                                       object_id=event_object.object_id))
+                                                       object_id=event_object.object_id,
+                                                       likes=event_object.likes))
         elif tp == MemberInfoTypes.REPOSTS:
             self._reposts.append(ResourceRepost(repost_id=event_object.repost_id,
                                                 user_id=event_object.user_id,
-                                                post_id=event_object.post_id))
+                                                post_id=event_object.post_id,
+                                                likes=event_object.likes,
+                                                views=event_object.views))
         elif tp == MemberInfoTypes.POSTS:
             self._released_posts.append(ResourcePost(post_id=event_object.post_id))
         elif tp == MemberInfoTypes.DONATES:
