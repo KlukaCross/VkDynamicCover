@@ -16,6 +16,8 @@ from VkDynamicCover.types import UpdateRatingEvents, RatingEvent, RatingEventRep
 from VkDynamicCover.utils import VkTools, TimeTools
 from VkDynamicCover.types import MemberInfoTypes
 
+import copy
+
 RATING_UPDATE_SECONDS = 60
 REPOSTS_INFO_UPDATE_SECONDS = 120
 
@@ -146,7 +148,7 @@ class RatingHandler(Subscriber):
 
     def _update_reposts_info(self):
         for members in self._ratings.values():
-            for member in members:
+            for member in list(members.values()).copy():
                 for repost in member.reposts.copy():
                     info = VkTools.get_repost(repost.user_id, repost.resource_id)
                     if not info:
@@ -282,6 +284,9 @@ class RatingMembers:
 
     def __iter__(self):
         return self._rating.values().__iter__()
+
+    def values(self):
+        return self._rating.values()
 
     def _add_post_like(self, event_object: RatingEventLike):
         for m in self._rating.values():
