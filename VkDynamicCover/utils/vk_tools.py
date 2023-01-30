@@ -29,6 +29,11 @@ def api_retry(func):
                 if e.code in [API_CODE_INVALID_PHOTO, API_CODE_INTERNAL_ERROR]:
                     time.sleep(RETRY_SLEEP_SECONDS)
                     continue
+            except requests.exceptions.JSONDecodeError as e:
+                last_error = e
+                c -= 1
+                time.sleep(RETRY_SLEEP_SECONDS)
+                continue
             except exceptions.ApiHttpError as e:
                 last_error = e
                 c -= 1

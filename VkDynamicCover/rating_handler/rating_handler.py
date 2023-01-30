@@ -16,7 +16,6 @@ from VkDynamicCover.types import UpdateRatingEvents, RatingEvent, RatingEventRep
 from VkDynamicCover.utils import VkTools, TimeTools
 from VkDynamicCover.types import MemberInfoTypes
 
-import copy
 
 RATING_UPDATE_SECONDS = 60
 REPOSTS_INFO_UPDATE_SECONDS = 120
