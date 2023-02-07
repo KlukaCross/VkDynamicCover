@@ -1,3 +1,4 @@
+import typing
 import uuid
 
 from abc import ABC, abstractmethod
@@ -5,27 +6,45 @@ from PIL import Image
 from VkDynamicCover.types import exceptions
 
 
-class Widget(ABC):
-    def __init__(self, **kwargs):
-        self.type = kwargs.get("type")
-        self.name = kwargs.get("name")
+class WidgetControl(ABC):
+    __TYPE__ = "Widget"
 
-    @abstractmethod
+    def __init__(self, drawer, designer, info):
+        self.__dict__["drawer"] = drawer
+        self.__dict__["designer"] = designer
+        self.__dict__["info"] = info
+
     def draw(self, surface: Image) -> Image:
-        return surface
+        self.designer.design(self.info)
+        return self.drawer.draw(surface, self.info)
+
+    def __getattr__(self, item):
+        return getattr(self.info, item)
+
+    def __setattr__(self, key, value):
+        if key in self.__dict__:
+            self.__dict__[key] = value
+            return
+        if hasattr(self.info, key):
+            return setattr(self.info, key, value)
 
     def __str__(self):
-        return self.name
+        return self.info.name
 
-    @property
-    def type(self) -> str:
-        return self._type
 
-    @type.setter
-    def type(self, tp: str):
-        if not isinstance(tp, str):
-            raise exceptions.CreateTypeException("type", str, type(tp))
-        self._type = tp
+class WidgetDrawer:
+    def draw(self, surface: Image, info: "WidgetInfo") -> Image:
+        return surface
+
+
+class WidgetDesigner:
+    def design(self, info: "WidgetInfo"):
+        pass
+
+
+class WidgetInfo:
+    def __init__(self, **kwargs):
+        self.name = kwargs.get("name")
 
     @property
     def name(self) -> str:
@@ -35,5 +54,4 @@ class Widget(ABC):
     def name(self, name: str):
         if name and not isinstance(name, str):
             raise exceptions.CreateTypeException("name", str, type(name))
-        self._name = name if name else uuid.uuid4()
-
+        self._name = name if name else str(uuid.uuid4())

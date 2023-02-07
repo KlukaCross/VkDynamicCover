@@ -7,10 +7,10 @@ from .listener import Listener
 from VkDynamicCover.types import MetaSingleton
 
 
-class LongpollListener(Listener):
-    __metaclass__ = MetaSingleton
-
+class LongpollListener(Listener, metaclass=MetaSingleton):
     def __init__(self, group_id: int):
+        if hasattr(self, "group_id"):
+            return
         super().__init__()
         self.group_id = group_id
         self.scheduler = BackgroundScheduler()

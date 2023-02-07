@@ -1,5 +1,5 @@
 {
-  "VERSION": "0.2",
+  "VERSION": "1.0",
   "show": [["w1", "time", "w2"]],
   "widgets": [
       {
@@ -19,7 +19,6 @@
         "name": "w2",
         "type": "Rating",
         "period": "week",
-        "group_id": 132505086,
         "point_formula": "{post_likes}+{post_comments}*2",
         "places": [
           {

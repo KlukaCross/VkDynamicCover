@@ -10,7 +10,7 @@ import typing
 
 from VkDynamicCover.types.interval import Interval
 from VkDynamicCover.rating_handler.member_info import MemberInfo
-from VkDynamicCover.rating_handler.rating_info import RatingInfo
+from VkDynamicCover.rating_handler.rating_unit_info import RatingUnitInfo
 from VkDynamicCover.types import UpdateRatingEvents, RatingEvent, RatingEventRepost, RatingEventComment, \
     RatingEventLike, RatingEventPost
 from VkDynamicCover.utils import VkTools, TimeTools
@@ -33,7 +33,7 @@ class RatingHandler(Subscriber):
         if hasattr(self, "_group_id"):
             return
         self._group_id = group_id
-        self._rating_info: typing.Dict[Interval, typing.List[RatingInfo]] = {}
+        self._rating_info: typing.Dict[Interval, typing.List[RatingUnitInfo]] = {}
         self._ratings: typing.Dict[Interval, RatingMembers] = {}
         self._last_subscribers: typing.Dict[int, int] = {}
         self._max_last_subs: int = 0
@@ -51,7 +51,7 @@ class RatingHandler(Subscriber):
         )
         self.scheduler.start()
 
-    def add_rating(self, rating_info: RatingInfo):
+    def add_rating(self, rating_info: RatingUnitInfo):
         interval = TimeTools.get_period_interval(rating_info.period)
         if interval not in self._ratings:
             self._ratings[interval] = RatingMembers()
@@ -65,7 +65,7 @@ class RatingHandler(Subscriber):
         self._update_rating(interval, rating_info)
 
     def update(self, event):
-        logger.debug(f"Новое событие {event}")
+        logger.debug(f"Новое событие {event} c id {event.id}")
         resource_event: UpdateRatingEvents = UpdateRatingEvents.NONE
         resource_time = 0
         if event.type == VkBotEventType.WALL_REPLY_NEW:
@@ -165,9 +165,9 @@ class RatingHandler(Subscriber):
         self._rating_info.pop(interval)
         logger.info("reset_rating")
 
-    def _update_rating(self, interval: Interval, rating_info: RatingInfo):
+    def _update_rating(self, interval: Interval, rating_info: RatingUnitInfo):
         rating_info.points.clear()
-        for member_info in self._ratings[interval]:
+        for member_info in list(self._ratings[interval].values()).copy():
             res: typing.Dict[str, int] = member_info.get_info()
             points = TextCalculator(FormatterFunction(lambda x: x)).get_format_text(rating_info.point_formula, res) if \
                 not rating_info.last_subs else self._last_subscribers.get(member_info.member_id, 0)

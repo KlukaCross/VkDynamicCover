@@ -1,7 +1,7 @@
 import typing
 
 
-class RatingInfo:
+class RatingUnitInfo:
     def __init__(self, period: str, ban_list: list, point_formula: str, places_count: int, last_subs: bool):
         self.period = period
         self.ban_list = ban_list

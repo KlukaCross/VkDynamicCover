@@ -8,28 +8,32 @@ from loguru import logger
 
 from VkDynamicCover.types import exceptions
 from VkDynamicCover.utils import VkTools, DrawTools
-from VkDynamicCover.widgets.widget import Widget
+from VkDynamicCover.widgets.widget import WidgetControl
 from VkDynamicCover.widgets import *
 from VkDynamicCover import builders
 
 COVER_WIDTH = 1920
 COVER_HEIGHT = 768
 
-SLEEP_SECONDS = 60
+DEFAULT_SLEEP_SECONDS = 60
 
-VERSION_MAIN_CONFIG = "0.1"
-VERSION_COVER_CONFIG = "0.2"
+VERSION_MAIN_CONFIG = 0.1
+VERSION_COVER_CONFIG = 1.0
+
+
+def check_version(user_version: str, actual_version: float, name_config: str):
+    if int(float(user_version)) != int(actual_version):
+        raise exceptions.CreateInvalidVersion(name_config)
+    if float(user_version) != actual_version:
+        logger.warning(f"Not actual version for {name_config}! Actual version is {actual_version}")
 
 
 class DynamicCover:
-    @logger.catch(reraise=True)
+    @logger.catch(onerror=lambda _: exit(1))
     def __init__(self, main_config: dict, cover_config: dict):
 
-        if main_config.get("VERSION") != VERSION_MAIN_CONFIG:
-            raise exceptions.CreateInvalidVersion("main_config")
-
-        if cover_config.get("VERSION") != VERSION_COVER_CONFIG:
-            raise exceptions.CreateInvalidVersion("cover_config")
+        check_version(main_config.get("VERSION"), VERSION_MAIN_CONFIG, "main_config")
+        check_version(cover_config.get("VERSION"), VERSION_COVER_CONFIG, "cover_config")
 
         token = main_config["token"]
         self.vk_session = VkTools.create_session(token)
@@ -43,10 +47,11 @@ class DynamicCover:
                                           show_cycle_names=show_cycle,
                                           group_id=group_id)
 
-        sleep = main_config.get("sleep", SLEEP_SECONDS)
+        sleep = main_config.get("sleep", DEFAULT_SLEEP_SECONDS)
         self.sleep_cycle = [sleep] if isinstance(sleep, int) else sleep
         self.cur_sleep = 0
 
+    @logger.catch(onerror=lambda _: exit(1))
     def start(self):
         while True:
             self.cover_drawing.update()
@@ -59,7 +64,7 @@ class WidgetCreator:
         self._main_config = main_config
         self._widget_list = widget_list
 
-    def create_widgets(self) -> typing.List[widget.Widget]:
+    def create_widgets(self) -> typing.List[widget.WidgetControl]:
         res_list = []
         for widget_info in self._widget_list:
             w = self.create_widget(**widget_info)
@@ -68,19 +73,19 @@ class WidgetCreator:
 
         return res_list
 
-    def create_widget(self, **kwargs) -> widget.Widget or None:
+    def create_widget(self, **kwargs) -> widget.WidgetControl or None:
         tp = kwargs.get("type")
-        if tp == text.Text.__name__:
+        if tp == text.TextControl.__TYPE__:
             builder = builders.TextBuilder()
-        elif tp in [picture.Picture.__name__, picture.VkAvatar.__name__, picture.RandomPicture.__name__]:
+        elif tp in [picture.PictureControl.__TYPE__, picture.VkAvatarControl.__TYPE__, picture.RandomPictureControl.__TYPE__]:
             builder = builders.PictureBuilder()
-        elif tp == date.Date.__name__:
+        elif tp == date.DateControl.__TYPE__:
             builder = builders.DateBuilder()
-        elif tp == statistics.Statistics.__name__:
+        elif tp == statistics.StatisticsControl.__TYPE__:
             builder = builders.StatisticsBuilder()
-        elif tp == rating.Rating.__name__:
+        elif tp == rating.RatingControl.__TYPE__:
             builder = builders.RatingBuilder()
-        elif tp == profile.Profile.__name__:
+        elif tp == profile.ProfileControl.__TYPE__:
             builder = builders.ProfileBuilder()
         else:
             logger.warning(f"Неизвестный тип виджета - {tp}")
@@ -98,15 +103,14 @@ class WidgetCreator:
 
 class CoverDrawing:
     def __init__(self, widget_list, show_cycle_names, group_id):
-        self._widget_list: typing.List[Widget] = widget_list
-        self._show_cycle: typing.List[typing.List[Widget]] = []
+        self._widget_list: typing.List[WidgetControl] = widget_list
+        self._show_cycle: typing.List[typing.List[WidgetControl]] = []
         self._create_show_cycle(show_cycle_names=show_cycle_names)
         self._surface = DrawTools.create_surface(COVER_WIDTH, COVER_HEIGHT)
         self._group_id = group_id
 
         self._cur_show = 0
 
-    @logger.catch(reraise=False)
     def update(self):
         self._surface = self.draw(self._surface)
 
@@ -128,7 +132,7 @@ class CoverDrawing:
     def _create_show_cycle(self, show_cycle_names):
         def get_widget(name: str):
             for wi in self._widget_list:
-                if name == wi.name:
+                if name == wi.info.name:
                     return wi
             logger.warning(f"Not found widget with name {name}")
 

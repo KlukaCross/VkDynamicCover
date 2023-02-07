@@ -1,8 +1,10 @@
 from functools import reduce
 
+from PIL.Image import Image
+
 from VkDynamicCover.types.spaced_types import SPACED_TYPES
-from VkDynamicCover.widgets.widget import Widget
-from VkDynamicCover.text_formatting import TextFormatter
+from VkDynamicCover.widgets.widget import WidgetControl, WidgetDrawer, WidgetDesigner, WidgetInfo
+from VkDynamicCover.text_formatting import TextFormatter, FormatterFunction, TextCalculator
 from VkDynamicCover.utils import DrawTools
 from VkDynamicCover.types import LIMITED_ACTION, exceptions, Coordinates
 import re
@@ -14,7 +16,37 @@ DEFAULT_COLOR = "black"
 DEFAULT_STROKE_WIDTH = 0
 
 
-class Text(Widget):
+class TextControl(WidgetControl):
+    __TYPE__ = "Text"
+
+
+class TextDrawer(WidgetDrawer):
+    def draw(self, surface: Image, info: "TextInfo") -> Image:
+        for coors, txt in info.result_text.items():
+            DrawTools.draw_text(surface=surface, text=txt, font_name=info.font_name,
+                                font_size=info.font_size,
+                                fill=info.fill, xy=(coors.x, coors.y), anchor=info.anchor, spacing=info.spacing,
+                                direction=info.direction, stroke_width=info.stroke_width,
+                                stroke_fill=info.stroke_fill)
+        return surface
+
+
+class TextDesigner(WidgetDesigner):
+    def design(self, info: "TextInfo"):
+        info.result_text = {Coordinates(info.xy): info.text}
+
+
+class MultipleTextDesigner(TextDesigner):
+    def __init__(self, designers: typing.List["TextDesigner"]):
+        self._designers = designers
+
+    def design(self, info: "TextInfo"):
+        super().design(info)
+        for designer in self._designers:
+            designer.design(info)
+
+
+class TextInfo(WidgetInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -29,17 +61,7 @@ class Text(Widget):
         self.stroke_width = kwargs.get("stroke_width", DEFAULT_STROKE_WIDTH)
         self.stroke_fill = kwargs.get("stroke_fill")
 
-    def draw(self, surface):
-        text = self.get_text()
-
-        DrawTools.draw_text(surface=surface, text=text, font_name=self.font_name, font_size=self.font_size,
-                            fill=self.fill, xy=(self.xy.x, self.xy.y), anchor=self.anchor, spacing=self.spacing,
-                            direction=self.direction, stroke_width=self.stroke_width,
-                            stroke_fill=self.stroke_fill)
-        return surface
-
-    def get_text(self) -> str:
-        return self.text
+        self.result_text: typing.Dict[Coordinates: str] = {}
 
     @property
     def text(self) -> str:
@@ -141,18 +163,42 @@ class Text(Widget):
             raise exceptions.CreateTypeException("xy", list, type(xy))
         if len(xy) != 2:
             raise exceptions.CreateValueException("xy length", 2, len(xy))
-        self._xy = Coordinates(xy[0], xy[1])
+        self._xy = Coordinates(xy)
 
 
-class FormattingText(Text):
+class MultipleTextInfo(TextInfo):
+    def __init__(self, infos: typing.List["WidgetInfo"], **kwargs):
+        self.__dict__["_infos"] = infos
+        super().__init__(**kwargs)
+
+    def __getattr__(self, item):
+        for info in self.__dict__["_infos"]:
+            if hasattr(info, item):
+                return getattr(info, item)
+        raise AttributeError
+
+    def __setattr__(self, key, value):
+        if key in self.__dict__:
+            self.__dict__[key] = value
+            return
+        for info in self.__dict__["_infos"]:
+            if hasattr(info, key):
+                return setattr(info, key, value)
+        super(WidgetInfo, self).__setattr__(key, value)
+
+
+class FormattingTextDesigner(TextDesigner):
+    def design(self, info: "FormattingTextInfo"):
+        if not info.formatter:
+            return
+        for coors, txt in info.result_text.items():
+            info.result_text[coors] = info.formatter.get_format_text(txt)
+
+
+class FormattingTextInfo(TextInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._formatter = None
-
-    def get_text(self) -> str:
-        if not self.formatter:
-            return self.text
-        return self._formatter.get_format_text(self.text)
 
     @property
     def formatter(self) -> typing.Optional[TextFormatter]:
@@ -165,43 +211,32 @@ class FormattingText(Text):
         self._formatter = formatter
 
 
-class LimitedText(FormattingText):
+class LimitedTextDesigner(TextDesigner):
+    def design(self, info: "LimitedTextInfo"):
+        for coors, txt in info.result_text.items():
+            info.result_text[coors] = self._get_formatted_text(info, txt)
+
+    @staticmethod
+    def _get_formatted_text(info, text):
+        limit_match = re.findall(r'\[.*]\[\d+]', text)
+        for lim in limit_match:
+            s = lim[1:lim.index(']')]
+            max_len = int(lim[lim.rindex('[') + 1:-1])
+            if info.limit_action == LIMITED_ACTION.DELETE.value:
+                s = s[:max_len]
+            elif info.limit_action == LIMITED_ACTION.NEWLINE.value:
+                s = s[:max_len] + "\n"
+            s += info.limit_end
+            text = text.replace(lim, s)
+
+        return text
+
+
+class LimitedTextInfo(TextInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.limit = kwargs.get("limit")
         self.limit_action = kwargs.get("limit_action")
         self.limit_end = kwargs.get("limit_end", "")
-
-    def get_text(self) -> str:
-        return self._get_formatted_text(super().get_text())
-
-    def _get_formatted_text(self, text):
-        if not self.limit or len(text) <= self.limit:
-            return text
-
-        res_text = ""
-        lines = text.split("\n")
-
-        for line in lines:
-            if len(line) > self.limit:
-                if self.limit_action == LIMITED_ACTION.DELETE.value:
-                    line = line[:self.limit] + self.limit_end
-                elif self.limit_action == LIMITED_ACTION.NEWLINE.value:
-                    line = line[:self.limit - 1] + self.limit_end + "\n" + \
-                           self._get_formatted_text(line[self.limit:])
-            res_text += line + "\n"
-
-        return res_text[:-1]
-
-    @property
-    def limit(self) -> int:
-        return self._limit
-
-    @limit.setter
-    def limit(self, limit: int):
-        if limit and not isinstance(limit, int):
-            raise exceptions.CreateTypeException(f"limit", str, type(limit))
-        self._limit = limit
 
     @property
     def limit_action(self) -> str:
@@ -227,35 +262,40 @@ class LimitedText(FormattingText):
         self._limit_str = limit_end
 
 
-class SpacedText(FormattingText):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.space_type = kwargs.get("space_type")
+class SpacedTextDesigner(TextDesigner):
+    def design(self, info: "SpacedTextInfo"):
+        result = {}
+        for coors, txt in info.result_text.items():
+            result.update(self.spacing(txt, coors, info))
+        info.result_text = result
 
-    def draw(self, surface):
-        def draw_text(txt):
-            if self.space_type == SPACED_TYPES.PRE_FORM.value:
-                txt = self.formatter.get_format_text(txt)
-            DrawTools.draw_text(surface=surface, text=txt, font_name=self.font_name, font_size=self.font_size,
-                                fill=self.fill, xy=(self.xy.x + shift_xy[0], self.xy.y + shift_xy[1]),
-                                anchor=self.anchor,
-                                spacing=self.spacing,
-                                direction=self.direction, stroke_width=self.stroke_width,
-                                stroke_fill=self.stroke_fill)
+    @staticmethod
+    def spacing(text: str, coors: Coordinates, info: "SpacedTextInfo") -> typing.Dict[Coordinates, str]:
+        result = {}
+
+        def add():
+            txt = text[from_ind:ind]
+            if info.space_type == SPACED_TYPES.PRE_FORM.value and hasattr(info, "formatter"):
+                txt = info.formatter.get_format_text(txt)
+
+            result[Coordinates(shift_xy)] = txt
 
         def shift_x():
             res = int(re.search(r'\d+', h_match[h]).group(0))
-            if self.space_type != SPACED_TYPES.WITH_START.value:
-                res += DrawTools.get_text_size(re.sub(r'\{.*}', "", text[from_ind:ind]), self.font_name, self.font_size)[0]
+            if info.space_type != SPACED_TYPES.WITH_START.value:
+                res += \
+                    DrawTools.get_text_size(re.sub(r'\{.*}', "", text[from_ind:ind]), info.font_name, info.font_size)[0]
             return res
 
         def shift_y():
             return int(re.search(r'\d+', v_match[v]).group(0))
 
-        text = self.text if self.space_type == SPACED_TYPES.PRE_FORM.value else self.formatter.get_format_text(self.text)
-        v_match = re.findall(r'\[vspace\(\d+\)]', text)
-        h_match = re.findall(r'\[hspace\(\d+\)]', text)
-        shift_xy = [0, 0]
+        if not (info.space_type == SPACED_TYPES.PRE_FORM.value or not hasattr(info, "formatter")):
+            text = info.formatter.get_format_text(text)
+
+        v_match = re.findall(r':vspace\(\d+\):', text)
+        h_match = re.findall(r':hspace\(\d+\):', text)
+        shift_xy = [coors.x, coors.y]
         ind = -1
         from_ind = 0
         v = h = 0
@@ -263,7 +303,7 @@ class SpacedText(FormattingText):
             v_ind = text.find(v_match[v], ind + 1)
             h_ind = text.find(h_match[h], ind + 1)
             ind = min(v_ind, h_ind)
-            draw_text(text[from_ind:ind])
+
             if ind == v_ind:
                 shift_xy[1] += shift_y()
                 from_ind = ind + len(v_match[v])
@@ -276,7 +316,7 @@ class SpacedText(FormattingText):
         while v < len(v_match):
             v_ind = text.find(v_match[v], ind + 1)
             ind = v_ind
-            draw_text(text[from_ind:ind])
+            add()
             shift_xy[1] += shift_y()
             from_ind = ind + len(v_match[v])
             v += 1
@@ -284,14 +324,21 @@ class SpacedText(FormattingText):
         while h < len(h_match):
             h_ind = text.find(h_match[h], ind + 1)
             ind = h_ind
-            draw_text(text[from_ind:ind])
+            add()
             shift_xy[0] += shift_x()
             from_ind = ind + len(h_match[h])
             h += 1
 
-        draw_text(text[from_ind:])
+        ind = len(info.result_text)
+        add()
 
-        return surface
+        return result
+
+
+class SpacedTextInfo(TextInfo):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.space_type = kwargs.get("space_type")
 
     @property
     def space_type(self) -> str:
@@ -305,3 +352,17 @@ class SpacedText(FormattingText):
         if spaced_type not in names:
             raise exceptions.CreateValueException("space_type", names, spaced_type)
         self._spaced_type = spaced_type
+
+
+class CalcTextDesigner(TextDesigner):
+    def design(self, info: "TextInfo"):
+        for coors, txt in info.result_text.items():
+            info.result_text[coors] = self._text_calc(txt)
+
+    @staticmethod
+    def _text_calc(text: str) -> str:
+        calcs = re.findall(r'<.*>', text)
+        for c in calcs:
+            calc_txt = TextCalculator.text_calc(c[1:-1])
+            text = text.replace(c, calc_txt, 1)
+        return text

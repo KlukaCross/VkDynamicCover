@@ -1,6 +1,11 @@
 class Coordinates:
-    def __init__(self, x, y):
-        self._xy = (x, y)
+    def __init__(self, *args):
+        if len(args) == 1:
+            self._xy = tuple(args[0])
+        elif len(args) == 2:
+            self._xy = (args[0], args[1])
+        else:
+            raise ValueError("args len must be 1 or 2")
 
     @property
     def x(self) -> int:

@@ -2,29 +2,46 @@ import random
 import re
 
 import typing
+from abc import ABC, abstractmethod
+
 from PIL import Image
 
-from .widget import Widget
+from .widget import WidgetControl, WidgetInfo, WidgetDrawer, WidgetDesigner
 from VkDynamicCover.utils import DrawTools
 from pathlib import Path
 from VkDynamicCover.types import Interval, exceptions, Coordinates
 from VkDynamicCover.utils import VkTools
 
-from abc import abstractmethod, ABC
+
+class PictureControl(WidgetControl):
+    __TYPE__ = "Picture"
 
 
-class Picture(Widget, ABC):
+class PictureDrawer(WidgetDrawer):
+    def draw(self, surface: Image, info: "PictureInfo") -> Image:
+        img = info.image
+        if not img:
+            return surface
+        img = self._get_resized_image(info, img)
+        return DrawTools.draw_image(surface=surface, img=img, shift=info.get_shift())
+
+    def _get_resized_image(self, info: "PictureInfo", image: Image):
+        return DrawTools.get_resized_image(image, info.resize) if info.resize else image
+
+
+class PictureDesigner(WidgetDesigner, ABC):
+    @abstractmethod
+    def design(self, info: "PictureInfo"):
+        raise NotImplementedError
+
+
+class PictureInfo(WidgetInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.resize = kwargs.get("resize")
         self.xy = kwargs.get("xy", [0, 0])
 
-    def draw(self, surface):
-        img = self.get_image()
-        if not img:
-            return surface
-        img = self._get_resized_image(img)
-        return DrawTools.draw_image(surface=surface, img=img, shift=self._get_shift())
+        self.image = None
 
     @property
     def resize(self):
@@ -49,20 +66,19 @@ class Picture(Widget, ABC):
             raise exceptions.CreateTypeException("xy", list, type(xy))
         if len(xy) != 2:
             raise exceptions.CreateValueException("xy length", 2, len(xy))
-        self._xy = Coordinates(xy[0], xy[1])
+        self._xy = Coordinates(xy)
 
-    @abstractmethod
-    def get_image(self) -> Image:
-        raise NotImplementedError
-
-    def _get_resized_image(self, image: Image):
-        return DrawTools.get_resized_image(image, self.resize) if self.resize else image
-
-    def _get_shift(self) -> (int, int):
+    def get_shift(self) -> (int, int):
         return self._xy.x, self._xy.y
 
 
-class LocalPicture(Picture):
+class LocalPictureDesigner(PictureDesigner):
+    def design(self, info: "LocalPictureInfo"):
+        p = Path(info.path)
+        info.image = DrawTools.get_image_from_path(p)
+
+
+class LocalPictureInfo(PictureInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._path = kwargs.get("path")
@@ -77,12 +93,13 @@ class LocalPicture(Picture):
             raise exceptions.CreateTypeException("path", str, type(path))
         self._path = path
 
-    def get_image(self) -> Image:
-        p = Path(self.path)
-        return DrawTools.get_image_from_path(p)
+
+class UrlPictureDesigner(PictureDesigner):
+    def design(self, info: "UrlPictureInfo"):
+        info.image = DrawTools.get_image_from_url(info.url)
 
 
-class UrlPicture(Picture):
+class UrlPictureInfo(PictureInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._url = kwargs.get("url")
@@ -97,35 +114,46 @@ class UrlPicture(Picture):
             raise exceptions.CreateTypeException(f"url", str, type(url))
         self._url = url
 
-    def get_image(self) -> Image:
-        return DrawTools.get_image_from_url(self.url)
+
+class RandomPictureControl(PictureControl):
+    __TYPE__ = "RandomPicture"
 
 
-class RandomPicture(ABC):
+class RandomPictureDesigner(ABC):
     @staticmethod
     @abstractmethod
     def random_function(pictures_number: int, **kwargs):
         raise NotImplementedError
 
 
-class RandomLocalPicture(RandomPicture, LocalPicture):
-    def __init__(self, **kwargs):
-        LocalPicture.__init__(self, **kwargs)
-
-    def get_image(self):
-        return DrawTools.get_random_image_from_dir(path=Path(self.path), rand_func=self.random_function)
+class RandomLocalPictureDesigner(LocalPictureDesigner, RandomPictureDesigner):
+    def design(self, info: "LocalPictureInfo"):
+        info.image = DrawTools.get_random_image_from_dir(path=Path(info.path), rand_func=self.random_function)
 
     @staticmethod
     def random_function(pictures_number: int, **kwargs):
         return random.randint(0, pictures_number)
 
 
-class RandomAlbumPicture(RandomPicture, UrlPicture):
+class RandomAlbumPictureDesigner(UrlPictureDesigner, RandomPictureDesigner):
     ALBUM_REGEX = r"https://(m\.)?vk\.com/album-"
 
+    def design(self, info: "RandomAlbumPictureInfo"):
+        group_id, album_id = re.sub(self.ALBUM_REGEX, "", info.url).split('_')
+        url = VkTools.get_random_image_from_album(group_id=int(group_id), album_id=int(album_id), user_id=info.user_id,
+                                                  rand_func=self.random_function)
+        info.image = DrawTools.get_image_from_url(url)
+
+    @staticmethod
+    def random_function(pictures_number: int, **kwargs):
+        user_id = kwargs.get("user_id")
+        return random.randint(0, pictures_number) if not user_id else user_id % pictures_number
+
+
+class RandomAlbumPictureInfo(UrlPictureInfo):
     def __init__(self, **kwargs):
         kwargs["url"] = kwargs.get("album_url")
-        UrlPicture.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self._user_id = kwargs.get("user_id")
 
     @property
@@ -136,19 +164,40 @@ class RandomAlbumPicture(RandomPicture, UrlPicture):
     def user_id(self, user_id: int):
         self._user_id = user_id
 
-    def get_image(self):
-        group_id, album_id = re.sub(self.ALBUM_REGEX, "", self.url).split('_')
-        url = VkTools.get_random_image_from_album(group_id=int(group_id), album_id=int(album_id), user_id=self.user_id,
-                                                  rand_func=self.random_function)
-        return DrawTools.get_image_from_url(url)
 
-    @staticmethod
-    def random_function(pictures_number: int, **kwargs):
-        user_id = kwargs.get("user_id")
-        return random.randint(0, pictures_number) if not user_id else user_id % pictures_number
+class VkAvatarControl(PictureControl):
+    __TYPE__ = "VkAvatar"
 
 
-class VkAvatar(Picture):
+class VkAvatarDesigner(PictureDesigner):
+    def design(self, info: "VkAvatarInfo"):
+        user = VkTools.get_user(user_id=info.user_id, fields="crop_photo")
+
+        if "crop_photo" not in user:
+            return DrawTools.get_image_from_url(info.default_url)
+
+        sizes = user["crop_photo"]["photo"]["sizes"]
+        photo_max = 0
+        for i in range(len(sizes)):
+            if sizes[i]["width"] > sizes[photo_max]["width"]:
+                photo_max = i
+
+        photo = DrawTools.get_image_from_url(sizes[photo_max]["url"])
+
+        if info.crop_type in ["crop", "small"]:
+            photo = photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,
+                                photo.height * user["crop_photo"]["crop"]["y"] // 100,
+                                photo.width * user["crop_photo"]["crop"]["x2"] // 100,
+                                photo.height * user["crop_photo"]["crop"]["y2"] // 100))
+            if info.crop_type == "small":
+                photo = photo.crop((photo.width * user["crop_photo"]["rect"]["x"] // 100,
+                                    photo.height * user["crop_photo"]["rect"]["y"] // 100,
+                                    photo.width * user["crop_photo"]["rect"]["x2"] // 100,
+                                    photo.height * user["crop_photo"]["rect"]["y2"] // 100))
+        info.image = photo
+
+
+class VkAvatarInfo(PictureInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -185,29 +234,3 @@ class VkAvatar(Picture):
         if url and not isinstance(url, str):
             raise exceptions.CreateTypeException(f"url", str, type(url))
         self._default_url = url
-
-    def get_image(self) -> Image:
-        user = VkTools.get_user(user_id=self.user_id, fields="crop_photo")
-
-        if "crop_photo" not in user:
-            return DrawTools.get_image_from_url(self.default_url)
-
-        sizes = user["crop_photo"]["photo"]["sizes"]
-        photo_max = 0
-        for i in range(len(sizes)):
-            if sizes[i]["width"] > sizes[photo_max]["width"]:
-                photo_max = i
-
-        photo = DrawTools.get_image_from_url(sizes[photo_max]["url"])
-
-        if self.crop_type in ["crop", "small"]:
-            photo = photo.crop((photo.width * user["crop_photo"]["crop"]["x"] // 100,
-                                photo.height * user["crop_photo"]["crop"]["y"] // 100,
-                                photo.width * user["crop_photo"]["crop"]["x2"] // 100,
-                                photo.height * user["crop_photo"]["crop"]["y2"] // 100))
-            if self.crop_type == "small":
-                photo = photo.crop((photo.width * user["crop_photo"]["rect"]["x"] // 100,
-                                    photo.height * user["crop_photo"]["rect"]["y"] // 100,
-                                    photo.width * user["crop_photo"]["rect"]["x2"] // 100,
-                                    photo.height * user["crop_photo"]["rect"]["y2"] // 100))
-        return photo

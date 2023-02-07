@@ -1,58 +1,73 @@
 import typing
 
+from PIL.Image import Image
+
+from VkDynamicCover.widgets.text import TextControl
 from VkDynamicCover.text_formatting import TextInserter
-from VkDynamicCover.widgets.text import FormattingText
-from VkDynamicCover.widgets.widget import Widget
-from VkDynamicCover.widgets.picture import Picture
+from VkDynamicCover.widgets.widget import WidgetControl, WidgetDrawer, WidgetInfo, WidgetDesigner
+from VkDynamicCover.widgets.picture import PictureControl
 from VkDynamicCover.text_formatting import FormatterFunction
 from VkDynamicCover.types import exceptions
 
 from VkDynamicCover.utils import VkTools
 
 
-class Profile(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.info = kwargs.get("info")
-        self.avatar = kwargs.get("avatar")
+class ProfileControl(WidgetControl):
+    __TYPE__ = "Profile"
 
-    def draw(self, surface):
-        if self.info:
-            surface = self.info.draw(surface)
-        if self.avatar:
-            surface = self.avatar.draw(surface)
+
+class ProfileDrawer(WidgetDrawer):
+    def draw(self, surface: Image, info: "ProfileInfo") -> Image:
+        if info.info_text:
+            surface = info.info_text.draw(surface)
+        if info.avatar:
+            surface = info.avatar.draw(surface)
         return surface
 
-    @property
-    def info(self) -> "UserInfo":
-        return self._info
 
-    @info.setter
-    def info(self, info: "UserInfo"):
-        if info and not isinstance(info, UserInfo):
-            raise exceptions.CreateTypeException("info", UserInfo, type(info))
-        self._info = info
+class ProfileInfo(WidgetInfo):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.info_text = kwargs.get("info")
+        self.avatar = kwargs.get("avatar")
 
     @property
-    def avatar(self) -> Picture:
+    def info_text(self) -> "UserInfoControl":
+        return self._info_text
+
+    @info_text.setter
+    def info_text(self, info: "UserInfoControl"):
+        if info and not isinstance(info, UserInfoControl):
+            raise exceptions.CreateTypeException("info", UserInfoControl, type(info))
+        self._info_text = info
+
+    @property
+    def avatar(self) -> PictureControl:
         return self._avatar
 
     @avatar.setter
-    def avatar(self, avatar: Picture):
-        if avatar and not isinstance(avatar, Picture):
-            raise exceptions.CreateTypeException("avatar", Picture, type(avatar))
+    def avatar(self, avatar: PictureControl):
+        if avatar and not isinstance(avatar, PictureControl):
+            raise exceptions.CreateTypeException("avatar", PictureControl, type(avatar))
         self._avatar = avatar
 
 
-class UserInfo(Widget):
+class UserInfoControl(WidgetControl):
+    __TYPE__ = "UserInfo"
+
+
+class UserInfoDrawer(WidgetDrawer):
+    def draw(self, surface: Image, info: "UserInfoInfo") -> Image:
+        return info.text.draw(surface)
+
+
+class UserInfoInfo(WidgetInfo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.text: FormattingText = kwargs.get("text")
+        self.text: TextControl = kwargs.get("text")
         self.user_id = kwargs.get("user_id")
-        self.text.formatter = TextInserter(FormatterFunction(UserInfo.get_user_info, user_id=self.user_id))
-
-    def draw(self, surface):
-        return self.text.draw(surface)
+        if hasattr(self.text, "formatter"):
+            self.text.formatter = TextInserter(FormatterFunction(self.get_user_info, user_id=self.user_id))
 
     @staticmethod
     def get_user_info(user_id: int) -> typing.Dict[str, str]:

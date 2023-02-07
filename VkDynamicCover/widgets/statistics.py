@@ -1,8 +1,10 @@
 import typing
 
+from PIL.Image import Image
+
 from VkDynamicCover import text_formatting as formatting
-from .text import FormattingText
-from .widget import Widget
+from .text import TextControl
+from .widget import WidgetControl, WidgetDrawer, WidgetInfo, WidgetDesigner
 from VkDynamicCover.utils import VkTools
 from VkDynamicCover.types import exceptions
 
@@ -15,20 +17,22 @@ SUPPORTED_VISITORS_STATS = ("views", "visitors")
 SUPPORTED_REACH_STATS = ("reach", "reach_subscribers", "mobile_reach")
 
 
-class Statistics(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.text = kwargs.get("text")
-        self.interval = kwargs.get("interval")
-        self.group_id = kwargs.get("group_id")
-        self.text.formatter = formatting.TextInserter(
-            function=formatting.FormatterFunction(Statistics.get_full_info,
-                                                  group_id=self.group_id,
-                                                  interval=self.interval)
-        )
+class StatisticsControl(WidgetControl):
+    __TYPE__ = "Statistics"
 
-    def draw(self, surface):
-        return self.text.draw(surface)
+
+class StatisticsDrawer(WidgetDrawer):
+    def draw(self, surface: Image, info: "StatisticsInfo") -> Image:
+        return info.text.draw(surface)
+
+
+class StatisticsDesigner(WidgetDesigner):
+    def design(self, info: "StatisticsInfo"):
+        info.text.formatter = formatting.TextInserter(
+            function=formatting.FormatterFunction(self.get_full_info,
+                                                  group_id=info.group_id,
+                                                  interval=info.interval)
+            )
 
     @staticmethod
     def get_full_info(group_id: int, interval: str) -> typing.Dict[str, str]:
@@ -49,6 +53,15 @@ class Statistics(Widget):
 
         return stats
 
+
+class StatisticsInfo(WidgetInfo):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.text = kwargs.get("text")
+        self.interval = kwargs.get("interval")
+        self.group_id = kwargs.get("group_id")
+
     @property
     def interval(self) -> str:
         return self._interval
@@ -60,13 +73,13 @@ class Statistics(Widget):
         self._interval = interval
 
     @property
-    def text(self) -> FormattingText:
+    def text(self) -> TextControl:
         return self._text
 
     @text.setter
-    def text(self, text: FormattingText):
-        if text and not isinstance(text, FormattingText):
-            raise exceptions.CreateTypeException("text", FormattingText, type(text))
+    def text(self, text: TextControl):
+        if text and not isinstance(text, TextControl):
+            raise exceptions.CreateTypeException("text", TextControl, type(text))
         self._text = text
 
     @property

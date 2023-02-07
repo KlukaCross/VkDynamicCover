@@ -1,5 +1,5 @@
 {
-  "VERSION": "0.2",
+  "VERSION": "1.0",
   "show": [["w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9", "w10", "w11", "w12"]],
   "widgets":
     [
@@ -86,10 +86,9 @@
         "name": "w10",
         "type": "Text",
         "font_name": "./examples/fonts/VERDANA.TTF",
-            "text": "very long text very long text very long text very long text very long text",
+            "text": "[very long text very long text very long text very long text very long text][15]",
         "font_size": 20,
             "xy": [750, 200],
-            "limit": 15,
             "limit_action": "newline",
             "limit_end": "-"
       },
@@ -97,10 +96,9 @@
         "name": "w11",
         "type": "Text",
         "font_name": "./examples/fonts/VERDANA.TTF",
-            "text": "very long text very long text very long text very long text very long text",
+            "text": "[very long text very long text very long text very long text very long text][20]",
         "font_size": 20,
             "xy": [1000, 200],
-            "limit": 20,
             "limit_action": "delete",
             "limit_end": "..."
       },
