@@ -18,7 +18,7 @@ COVER_HEIGHT = 768
 DEFAULT_SLEEP_SECONDS = 60
 
 VERSION_MAIN_CONFIG = 0.1
-VERSION_COVER_CONFIG = 1.0
+VERSION_COVER_CONFIG = 1.1
 
 
 def check_version(user_version: str, actual_version: float, name_config: str):

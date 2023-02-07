@@ -151,7 +151,11 @@ class _VkTools(metaclass=MetaSingleton):
 
     @api_retry
     def get_comment_likes(self, comment_id: int, owner_id: int):
-        return self._vk_meth.likes.getList(type="comment", owner_id=owner_id, item_id=comment_id)
+        res = self._vk_meth.likes.getList(type="comment", owner_id=owner_id, item_id=comment_id)
+        if res is None:
+            logger.warning(f"Not find comment {owner_id} {comment_id}")
+            return []
+        return res
 
     @api_retry
     def get_post_comments(self, group_id: int, post_id: int, comments_count: int, need_likes=False):

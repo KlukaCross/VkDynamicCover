@@ -218,15 +218,16 @@ class LimitedTextDesigner(TextDesigner):
 
     @staticmethod
     def _get_formatted_text(info, text):
-        limit_match = re.findall(r'\[.*]\[\d+]', text)
+        limit_match = re.findall(r'\[[^\[\]]*]\[\d+]', text)
         for lim in limit_match:
             s = lim[1:lim.index(']')]
+            now_len = len(s)
             max_len = int(lim[lim.rindex('[') + 1:-1])
-            if info.limit_action == LIMITED_ACTION.DELETE.value:
-                s = s[:max_len]
-            elif info.limit_action == LIMITED_ACTION.NEWLINE.value:
-                s = s[:max_len] + "\n"
-            s += info.limit_end
+            if now_len > max_len:
+                if info.limit_action == LIMITED_ACTION.DELETE.value:
+                    s = s[:max_len] + info.limit_end
+                elif info.limit_action == LIMITED_ACTION.NEWLINE.value:
+                    s = s[:max_len] + info.limit_end + "\n"
             text = text.replace(lim, s)
 
         return text
@@ -359,14 +360,37 @@ class SpacedTextInfo(TextInfo):
 
 
 class CalcTextDesigner(TextDesigner):
-    def design(self, info: "TextInfo"):
+    def design(self, info: "CalcTextInfo"):
         for coors, txt in info.result_text.items():
-            info.result_text[coors] = self._text_calc(txt)
+            info.result_text[coors] = self._text_calc(txt, info)
 
     @staticmethod
-    def _text_calc(text: str) -> str:
-        calcs = re.findall(r'<.*>', text)
+    def _text_calc(text: str, info: "CalcTextInfo") -> str:
+        calcs = re.findall(r'<[^<>]*>', text)
         for c in calcs:
-            calc_txt = TextCalculator.text_calc(c[1:-1])
-            text = text.replace(c, calc_txt, 1)
+            res = TextCalculator.text_calc(c[1:-1])
+            if info.to_int:
+                res = str(int(float(res)))
+            text = text.replace(c, res, 1)
         return text
+
+
+class CalcTextInfo(TextInfo):
+    def __init__(self, **kwargs):
+        self.to_int = kwargs.get("to_int", False)
+        super().__init__(**kwargs)
+
+    @property
+    def to_int(self) -> bool:
+        return self._to_int
+
+    @to_int.setter
+    def to_int(self, to_int: bool or str):
+        if isinstance(to_int, str):
+            if to_int.lower() not in ["true", "false"]:
+                raise exceptions.CreateValueException("to_int", "true or false", to_int)
+            self._to_int = True if to_int.lower() == "true" else False
+        elif isinstance(to_int, bool):
+            self._to_int = to_int
+        else:
+            raise exceptions.CreateTypeException("to_int", [bool, str], type(to_int))

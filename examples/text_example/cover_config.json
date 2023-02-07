@@ -1,6 +1,6 @@
 {
-  "VERSION": "1.0",
-  "show": [["w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9", "w10", "w11", "w12"]],
+  "VERSION": "1.1",
+  "show": [["w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9", "w10", "w11", "w12", "w13", "w14"]],
   "widgets":
     [
       {
@@ -110,6 +110,23 @@
         "font_name": "./examples/fonts/VERDANA.TTF",
         "font_size": 30,
         "xy": [1300, 400]
+      },
+      {
+        "name": "w13",
+        "type": "Text",
+        "text": "results: <26+9*3> <3//2> <3/2> <sin(12)>",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 30,
+        "xy": [1300, 600]
+      },
+      {
+        "name": "w14",
+        "type": "Text",
+        "text": "results: <26+9*3> <3//2> <3/2> <sin(12)>",
+        "font_name": "./examples/fonts/VERDANA.TTF",
+        "font_size": 30,
+        "xy": [1300, 700],
+        "to_int": "true"
       }
     ]
 }
