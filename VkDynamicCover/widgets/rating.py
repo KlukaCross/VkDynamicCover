@@ -35,6 +35,7 @@ class RatingDesigner(WidgetDesigner):
         sort_values.sort(key=lambda x: -x[MemberInfoTypes.POINTS.value] if x[MemberInfoTypes.MEMBER_INFO.value]
                                                                            not in info.rating_info.ban_list else 0)
         min_len = min(len(info.places), len(sort_values))
+        logger.debug("rating:")
         for i in range(min_len):
             mi = sort_values[i] if sort_values[i][MemberInfoTypes.POINTS.value] > 0 else {}
             info.places[i].designer.update_member_info(info.places[i].info, mi)

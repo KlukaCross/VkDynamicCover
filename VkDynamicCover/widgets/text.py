@@ -274,6 +274,8 @@ class SpacedTextDesigner(TextDesigner):
         result = {}
 
         def add():
+            if from_ind == ind:
+                return
             txt = text[from_ind:ind]
             if info.space_type == SPACED_TYPES.PRE_FORM.value and hasattr(info, "formatter"):
                 txt = info.formatter.get_format_text(txt)
@@ -304,6 +306,8 @@ class SpacedTextDesigner(TextDesigner):
             h_ind = text.find(h_match[h], ind + 1)
             ind = min(v_ind, h_ind)
 
+            add()
+
             if ind == v_ind:
                 shift_xy[1] += shift_y()
                 from_ind = ind + len(v_match[v])
@@ -329,7 +333,7 @@ class SpacedTextDesigner(TextDesigner):
             from_ind = ind + len(h_match[h])
             h += 1
 
-        ind = len(info.result_text)
+        ind = len(text)
         add()
 
         return result

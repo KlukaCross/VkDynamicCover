@@ -3,7 +3,7 @@ from .subscriber import Subscriber
 import typing
 
 
-class Listener(ABC):
+class Listener:
     def __init__(self):
         self._subscribers: typing.List[Subscriber] = []
 

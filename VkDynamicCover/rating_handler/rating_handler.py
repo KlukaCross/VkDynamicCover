@@ -65,7 +65,7 @@ class RatingHandler(Subscriber):
         self._update_rating(interval, rating_info)
 
     def update(self, event):
-        logger.debug(f"Новое событие {event} c id {event.id}")
+        logger.debug(f"Новое событие {event}")
         resource_event: UpdateRatingEvents = UpdateRatingEvents.NONE
         resource_time = 0
         if event.type == VkBotEventType.WALL_REPLY_NEW:

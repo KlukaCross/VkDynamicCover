@@ -98,21 +98,25 @@ class _VkTools(metaclass=MetaSingleton):
         return req
 
     @api_retry
-    def get_post(self, group_id: int, post_id: int) -> dict or None:
-        posts = self._vk_meth.wall.getById(posts=[f"{group_id}_{post_id}"])
+    def get_group_post(self, group_id: int, post_id: int) -> dict or None:
+        posts = self._vk_meth.wall.getById(posts=[f"-{group_id}_{post_id}"])
+        if len(posts):
+            return posts[0]
+
+    @api_retry
+    def get_user_post(self, user_id: int, post_id: int) -> dict or None:
+        posts = self._vk_meth.wall.getById(posts=[f"{user_id}_{post_id}"])
         if len(posts):
             return posts[0]
 
     @api_retry
     def get_repost(self, user_id: int, repost_id: int) -> dict or None:
-        return self.get_post(user_id, repost_id)
+        return self.get_user_post(user_id, repost_id)
 
     @api_retry
     def get_post_time(self, group_id: int, post_id: int) -> int:
-        post = self.get_post(group_id, post_id)
-        if post:
-            return post["date"]
-        return 0
+        post = self.get_group_post(group_id, post_id)
+        return post["date"]
 
     @api_retry
     def get_posts_from_date(self, group_id: int, from_date_unixtime: int):
@@ -123,7 +127,7 @@ class _VkTools(metaclass=MetaSingleton):
             yield req["items"][0]
 
         for i in range(count_posts // 100 + 1):
-            req = self._vk_meth.wall.get(owner_id=-group_id, count=100, offset=1 + i * 100)
+            req = self._vk_meth.wall.get(owner_id=-group_id, count=100, offset=2 + i * 100)
             if req["items"][-1]["date"] < from_date_unixtime:
                 break
             for p in req["items"]:

@@ -23,3 +23,6 @@ class Coordinates:
 
     def __add__(self, other):
         return self._xy + other
+
+    def __str__(self):
+        return self._xy.__str__()

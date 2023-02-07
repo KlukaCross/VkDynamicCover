@@ -105,7 +105,7 @@
       {
         "name": "w12",
         "type": "Text",
-        "text": "one[hspace(25)][vspace(25)]two[hspace(25)][vspace(25)]three",
+        "text": "one:hspace(25)::vspace(25):two:hspace(25)::vspace(25):three",
         "space_type": "pre_form",
         "font_name": "./examples/fonts/VERDANA.TTF",
         "font_size": 30,
