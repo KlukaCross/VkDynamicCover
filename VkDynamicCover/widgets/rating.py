@@ -10,7 +10,7 @@ from .widget import WidgetControl, WidgetInfo, WidgetDrawer, WidgetDesigner
 from .profile import ProfileControl
 from VkDynamicCover.text_formatting import FormatterFunction
 from VkDynamicCover.text_formatting import TextInserter
-from VkDynamicCover.rating_handler.rating_unit_info import RatingUnitInfo
+from VkDynamicCover.types.rating_unit_info import RatingUnitInfo
 from VkDynamicCover.types import exceptions, MemberInfoTypes
 from VkDynamicCover.utils import TimeTools
 

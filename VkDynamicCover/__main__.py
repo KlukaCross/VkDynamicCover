@@ -1,12 +1,13 @@
 import argparse
 import json
 import sys
-import time
 from pathlib import Path
 
 from loguru import logger
 
 from . import DynamicCover, __version__
+
+from VkDynamicCover.plugins.scheduler import Scheduler
 
 MAIN_CONFIG_PATH = Path.cwd() / "main_config.json"
 COVER_CONFIG_PATH = Path.cwd() / "cover_config.json"
@@ -92,6 +93,9 @@ if __name__ == "__main__":
         logger.error(e)
         sys.exit()
 
-    dynamic_cover = DynamicCover(main_config=main_config, cover_config=cover_config)
-    dynamic_cover.start()
-
+    try:
+        dynamic_cover = DynamicCover(main_config=main_config, cover_config=cover_config)
+        Scheduler.start()
+        dynamic_cover.start()
+    except (KeyboardInterrupt, SystemExit) as e:
+        Scheduler.stop()

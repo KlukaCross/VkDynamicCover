@@ -1,6 +1,6 @@
 import datetime
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from VkDynamicCover.plugins.scheduler import Scheduler
 from loguru import logger
 from vk_api.bot_longpoll import VkBotEventType
 
@@ -9,12 +9,11 @@ from VkDynamicCover.listeners import Subscriber
 import typing
 
 from VkDynamicCover.types.interval import Interval
-from VkDynamicCover.rating_handler.member_info import MemberInfo
-from VkDynamicCover.rating_handler.rating_unit_info import RatingUnitInfo
-from VkDynamicCover.types import UpdateRatingEvents, RatingEvent, RatingEventRepost, RatingEventComment, \
+from VkDynamicCover.types.rating_unit_info import RatingUnitInfo
+from VkDynamicCover.types import UpdateRatingEvents, RatingEventRepost, RatingEventComment, \
     RatingEventLike, RatingEventPost
 from VkDynamicCover.utils import VkTools, TimeTools
-from VkDynamicCover.types import MemberInfoTypes
+from VkDynamicCover.types import MemberInfoTypes, ResourcePost, ResourceRepost, ResourceComment
 
 
 RATING_UPDATE_SECONDS = 60
@@ -37,19 +36,8 @@ class RatingHandler(Subscriber):
         self._ratings: typing.Dict[Interval, RatingMembers] = {}
         self._last_subscribers: typing.Dict[int, int] = {}
         self._max_last_subs: int = 0
-
-        self.scheduler = BackgroundScheduler()
-        self.scheduler.add_job(
-            func=self._update_ratings,
-            trigger="interval",
-            seconds=RATING_UPDATE_SECONDS
-        )
-        self.scheduler.add_job(
-            func=self._update_reposts_info,
-            trigger="interval",
-            seconds=REPOSTS_INFO_UPDATE_SECONDS
-        )
-        self.scheduler.start()
+        Scheduler.add_job(self._update_ratings, trigger="interval", seconds=RATING_UPDATE_SECONDS)
+        Scheduler.add_job(self._update_reposts_info, trigger="interval", seconds=REPOSTS_INFO_UPDATE_SECONDS)
 
     def add_rating(self, rating_info: RatingUnitInfo):
         interval = TimeTools.get_period_interval(rating_info.period)
@@ -242,17 +230,17 @@ class RatingMembers:
     def __init__(self):
         self._rating: typing.Dict[int, MemberInfo] = {}
 
-    def add(self, member_id: int) -> MemberInfo:
+    def add(self, member_id: int) -> "MemberInfo":
         if member_id in self._rating:
             return self._rating[member_id]
         member_info = MemberInfo(member_id=member_id)
         self._rating[member_id] = member_info
         return member_info
 
-    def get_member(self, member_id: int) -> MemberInfo or None:
+    def get_member(self, member_id: int) -> "MemberInfo" or None:
         return self._rating.get(member_id)
 
-    def get_all(self) -> typing.List[MemberInfo]:
+    def get_all(self) -> typing.List["MemberInfo"]:
         return list(self._rating.values())
 
     def add_resource(self, user_id: int, event: UpdateRatingEvents, event_object):
@@ -307,3 +295,116 @@ class RatingMembers:
             if pst:
                 pst.comments += 1
                 break
+
+
+class MemberInfo:
+    def __init__(self, member_id: int):
+        self._member_id = member_id
+
+        self._post_likes: int = 0
+        self._comment_likes: int = 0
+        self._post_comments: typing.List[ResourceComment] = []
+        self._comment_comments: typing.List[ResourceComment] = []
+        self._reposts: typing.List[ResourceRepost] = []
+        self._released_posts: typing.List[ResourcePost] = []
+        self._donates: int = 0
+
+    @property
+    def member_id(self) -> int:
+        return self._member_id
+
+    @property
+    def reposts(self) -> typing.List[ResourceRepost]:
+        return self._reposts
+
+    def get_info(self) -> typing.Dict[str, int]:
+        views_of_reposts = 0
+        likes_of_reposts = 0
+        for i in self.reposts:
+            views_of_reposts += i.views
+            likes_of_reposts += i.likes
+
+        likes_of_comments = 0
+        for i in self._post_comments:
+            likes_of_comments += i.likes
+
+        likes_of_posts = 0
+        comments_of_posts = 0
+        for i in self._released_posts:
+            likes_of_posts += i.likes
+            comments_of_posts += i.comments
+
+        res = {MemberInfoTypes.MEMBER_INFO.value: self._member_id,
+               MemberInfoTypes.COMMENT_LIKES.value: self._comment_likes,
+               MemberInfoTypes.POST_LIKES.value: self._post_likes,
+               MemberInfoTypes.POST_COMMENTS.value: len(self._post_comments),
+               MemberInfoTypes.REPOSTS.value: len(self._reposts),
+               MemberInfoTypes.POSTS.value: len(self._released_posts),
+               MemberInfoTypes.DONATES.value: self._donates,
+               MemberInfoTypes.VIEWS_OF_REPOSTS.value: views_of_reposts,
+               MemberInfoTypes.LIKES_OF_REPOSTS.value: likes_of_reposts,
+               MemberInfoTypes.LIKES_OF_COMMENTS.value: likes_of_comments,
+               MemberInfoTypes.LIKES_OF_POSTS.value: likes_of_posts,
+               MemberInfoTypes.COMMENTS_OF_POSTS.value: comments_of_posts}
+        return res
+
+    def add(self, tp: MemberInfoTypes, event_object):
+        if tp == MemberInfoTypes.POST_LIKES:
+            self._post_likes += event_object.count
+        elif tp == MemberInfoTypes.COMMENT_LIKES:
+            self._comment_likes += event_object.count
+        elif tp == MemberInfoTypes.POST_COMMENTS:
+            self._post_comments.append(ResourceComment(comment_id=event_object.comment_id,
+                                                       object_id=event_object.object_id,
+                                                       likes=event_object.likes))
+        elif tp == MemberInfoTypes.REPOSTS:
+            self._reposts.append(ResourceRepost(repost_id=event_object.repost_id,
+                                                user_id=event_object.user_id,
+                                                post_id=event_object.post_id,
+                                                likes=event_object.likes,
+                                                views=event_object.views))
+        elif tp == MemberInfoTypes.POSTS:
+            self._released_posts.append(ResourcePost(post_id=event_object.post_id))
+        elif tp == MemberInfoTypes.DONATES:
+            self._donates -= event_object.count
+
+    def remove(self, tp: MemberInfoTypes, event_object):
+        if tp == MemberInfoTypes.POST_LIKES:
+            self._post_likes -= 1
+        elif tp == MemberInfoTypes.COMMENT_LIKES:
+            self._comment_likes -= 1
+        elif tp == MemberInfoTypes.POST_COMMENTS:
+            for a in self._post_comments:
+                if a.resource_id == event_object.post_id:
+                    self._post_comments.remove(a)
+                    break
+        elif tp == MemberInfoTypes.REPOSTS:
+            for a in self._reposts:
+                if a.resource_id == event_object.repost_id:
+                    self._reposts.remove(a)
+                    break
+        elif tp == MemberInfoTypes.POSTS:
+            for a in self._released_posts:
+                if a.resource_id == event_object.post_id:
+                    self._released_posts.remove(a)
+                    break
+        elif tp == MemberInfoTypes.DONATES:
+            self._donates -= event_object.count
+
+    def get_post(self, post_id: int) -> typing.Union[None, ResourcePost]:
+        for a in self._released_posts:
+            if a.resource_id == post_id:
+                return a
+        return None
+
+    def get_repost(self, repost_id: int) -> typing.Union[None, ResourceRepost]:
+        for a in self._reposts:
+            if a.resource_id == repost_id:
+                return a
+        return None
+
+    def get_comment(self, post_id: int) -> typing.Union[None, ResourceComment]:
+        for a in self._post_comments:
+            if a.resource_id == post_id:
+                return a
+        return None

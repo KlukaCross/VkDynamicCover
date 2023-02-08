@@ -1,5 +1,5 @@
 import requests
-from apscheduler.schedulers.background import BackgroundScheduler
+from VkDynamicCover.plugins.scheduler import Scheduler
 from loguru import logger
 
 from VkDynamicCover.utils import VkTools
@@ -13,18 +13,13 @@ class LongpollListener(Listener, metaclass=MetaSingleton):
             return
         super().__init__()
         self.group_id = group_id
-        self.scheduler = BackgroundScheduler()
-        self.scheduler.add_job(
-            func=self.listen,
-        )
-        self.scheduler.start()
+        Scheduler.add_job(self.listen)
 
     def listen(self):
         longpoll = VkTools.get_longpoll(group_id=self.group_id)
-        while True:
+        while Scheduler.running:
             try:
-                for event in longpoll.listen():
+                for event in longpoll.check():
                     self.update_all(event)
             except requests.exceptions.ReadTimeout as e:
                 logger.warning(f"Время ожидания ответа истекло.\n{e}")
-

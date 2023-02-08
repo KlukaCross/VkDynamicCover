@@ -6,6 +6,7 @@ import typing
 from PIL.Image import Image
 from loguru import logger
 
+from VkDynamicCover.plugins.scheduler import Scheduler
 from VkDynamicCover.types import exceptions
 from VkDynamicCover.utils import VkTools, DrawTools
 from VkDynamicCover.widgets.widget import WidgetControl
@@ -53,7 +54,7 @@ class DynamicCover:
 
     @logger.catch(onerror=lambda _: exit(1))
     def start(self):
-        while True:
+        while Scheduler.running:
             self.cover_drawing.update()
             time.sleep(self.sleep_cycle[self.cur_sleep])
             self.cur_sleep = (self.cur_sleep + 1) % len(self.sleep_cycle)

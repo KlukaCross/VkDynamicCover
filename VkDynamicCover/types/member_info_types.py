@@ -10,7 +10,6 @@ class MemberInfoTypes(Enum):
     REPOSTS = "reposts"
     POSTS = "posts"
     DONATES = "donates"
-    # COMMENT_COMMENTS = "comment_comments"
 
     VIEWS_OF_REPOSTS = "views_of_reposts"
     LIKES_OF_REPOSTS = "likes_of_reposts"

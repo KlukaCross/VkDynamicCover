@@ -9,11 +9,12 @@ import time
 
 from loguru import logger
 
+
 API_CODE_INVALID_PHOTO = 129
 API_CODE_INTERNAL_ERROR = 10
 
-RETRY_SLEEP_SECONDS = 1
-RETRY_COUNT = 2
+RETRY_SLEEP_SECONDS = 10
+RETRY_COUNT = 3
 
 
 def api_retry(func):
@@ -25,22 +26,14 @@ def api_retry(func):
                 return func(*args, **kwargs)
             except exceptions.ApiError as e:
                 last_error = e
-                c -= 1
-                if e.code in [API_CODE_INVALID_PHOTO, API_CODE_INTERNAL_ERROR]:
-                    time.sleep(RETRY_SLEEP_SECONDS)
-                    continue
-            except requests.exceptions.JSONDecodeError as e:
+                if e.code not in [API_CODE_INVALID_PHOTO, API_CODE_INTERNAL_ERROR]:
+                    break
+            except (requests.RequestException, exceptions.VkApiError) as e:
                 last_error = e
-                c -= 1
-                time.sleep(RETRY_SLEEP_SECONDS)
-                continue
-            except exceptions.ApiHttpError as e:
-                last_error = e
-                c -= 1
-                time.sleep(RETRY_SLEEP_SECONDS)
-                continue
-            except exceptions.VkApiError as e:
-                last_error = e
+
+            time.sleep(RETRY_SLEEP_SECONDS)
+            c -= 1
+
         logger.error(last_error)
 
     return wrapper

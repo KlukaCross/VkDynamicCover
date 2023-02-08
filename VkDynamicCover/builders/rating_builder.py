@@ -2,9 +2,9 @@ from VkDynamicCover.builders import PictureBuilder
 from VkDynamicCover.builders.text_builder import TextBuilder
 from VkDynamicCover.builders.profile_builder import ProfileBuilder
 from VkDynamicCover.builders.widget_builder import WidgetBuilder
-from VkDynamicCover.rating_handler.rating_handler import RatingHandler
+from VkDynamicCover.plugins.rating_handler import RatingHandler
 from VkDynamicCover.listeners import LongpollListener
-from VkDynamicCover.rating_handler.rating_unit_info import RatingUnitInfo
+from VkDynamicCover.types.rating_unit_info import RatingUnitInfo
 from VkDynamicCover.widgets.rating import RatingControl, RatingDrawer, RatingDesigner, RatingInfo, \
     RatingPlaceControl, RatingPlaceDrawer, RatingPlaceDesigner, RatingPlaceInfo
 
