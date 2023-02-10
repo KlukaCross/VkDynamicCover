@@ -33,7 +33,7 @@ python3 -m VkDynamicCover
 ***
 ### Сборка и запуск Docker контейнера
 ```
-docker build --tag vkdynamiccover .
+docker build -t vkdynamiccover .
 docker run vkdynamiccover
 ```
 

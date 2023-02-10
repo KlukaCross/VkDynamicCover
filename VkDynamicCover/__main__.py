@@ -68,9 +68,15 @@ if __name__ == "__main__":
         logger.add(
             logs_dir / "log_{time}_INFO.log",
             level="INFO",
+            backtrace=True,
             rotation="daily",
             retention="3 days",
             compression="zip",
+        )
+        logger.add(
+            sys.stdout,
+            level="INFO",
+            backtrace=True
         )
 
     logger.info("VkDynamicCover запущен")

@@ -1,14 +1,14 @@
-# syntax=docker/dockerfile:1
+FROM python:3.8-slim
 
-FROM python:3.8-alpine
-
+VOLUME /usr/src/VkDynamicCover
 WORKDIR /usr/src/VkDynamicCover
 
-COPY requirements.txt requirements.txt
-RUN apk update
-RUN apk add make automake gcc g++ subversion python3-dev
-RUN pip3 install -r requirements.txt
+COPY setup.py requirements.txt README.md ./
+COPY ./VkDynamicCover ./VkDynamicCover
 
-COPY . .
+RUN apt-get update && \
+    pip3 install . && \
+    apt-get autoremove
+
 
 ENTRYPOINT ["python3", "-m", "VkDynamicCover"]
