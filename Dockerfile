@@ -1,6 +1,5 @@
 FROM python:3.8-slim
 
-VOLUME /usr/src/VkDynamicCover
 WORKDIR /usr/src/VkDynamicCover
 
 COPY setup.py requirements.txt README.md ./
