@@ -33,8 +33,12 @@ python3 -m VkDynamicCover
 ***
 ### Сборка и запуск Docker контейнера
 ```
-docker build -t vkdynamiccover .
-docker run vkdynamiccover
+docker build -t vk_dynamic_cover .
+docker run -it --name vkdynamiccover vk_dynamic_cover [параметры запуска]
 ```
 
-При необходимости можно указать параметры запуска бота, например ```docker run vkdynamiccover -m ./config.json -c ./widgets.json -d```
+Если конфигурационные файлы или файлы, необходимые для создания обложки, находятся не в корне проекта или пути к ним абсолютны в файле конфигурации, то необходимо примонтировать том с помощью конструкции `-v <путь к каталогу или файлу на хост-машине>:<путь, по которому файл или каталог будут смонтированы в контейнере>`
+Например:
+```
+docker run -it --name vkdynamiccover -v ~/my_confs:/conf vk_dynamic_cover -m /conf/main_config.json -c /conf/cover_config.json 
+```
