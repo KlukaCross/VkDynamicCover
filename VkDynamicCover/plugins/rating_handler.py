@@ -93,7 +93,7 @@ class RatingHandler(Subscriber):
             resource_event = UpdateRatingEvents.ADD_REPOST
             user_id = event.object["owner_id"]
 
-        elif event.type == VkBotEventType.WALL_POST_NEW:
+        elif event.type == VkBotEventType.WALL_POST_NEW and event.object["post_type"] not in ["postpone", "suggest"]:
             user_id = event.object.get("signer_id", -1)
             resource_event = UpdateRatingEvents.ADD_POST
             event_object = RatingEventPost(unixtime=event.object["date"], post_id=event.object["id"])
