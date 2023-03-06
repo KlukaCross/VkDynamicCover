@@ -9,6 +9,8 @@ from VkDynamicCover.widgets.picture import PictureControl
 from VkDynamicCover.text_formatting import FormatterFunction
 from VkDynamicCover.types import exceptions
 
+from loguru import logger
+
 from VkDynamicCover.utils import VkTools
 
 
@@ -72,6 +74,9 @@ class UserInfoInfo(WidgetInfo):
     @staticmethod
     def get_user_info(user_id: int) -> typing.Dict[str, str]:
         user_info = VkTools.get_user(user_id=user_id)
+        if user_info is None:
+            logger.warning(f"user {user_id} not found")
+            return {}
         return user_info
 
     @property
