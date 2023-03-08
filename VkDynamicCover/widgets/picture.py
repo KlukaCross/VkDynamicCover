@@ -147,7 +147,7 @@ class RandomAlbumPictureDesigner(UrlPictureDesigner, RandomPictureDesigner):
     @staticmethod
     def random_function(pictures_number: int, **kwargs):
         user_id = kwargs.get("user_id")
-        return random.randint(0, pictures_number) if not user_id else user_id % pictures_number
+        return random.randint(0, pictures_number-1) if not user_id else user_id % pictures_number
 
 
 class RandomAlbumPictureInfo(UrlPictureInfo):

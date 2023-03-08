@@ -67,7 +67,7 @@ class _VkTools(metaclass=MetaSingleton):
         count = self._vk_meth.photos.get(owner_id=-group_id, album_id=album_id, count=1)["count"]
         random_offset = rand_func(count, **kwargs)
         random_req = \
-            self._vk_meth.photos.get(owner_id=-group_id, album_id=album_id, offset=random_offset % count+1, count=1)["items"][0]
+            self._vk_meth.photos.get(owner_id=-group_id, album_id=album_id, offset=random_offset, count=1)["items"][0]
         photo_url = None
         max_width = 0
         for i in random_req["sizes"]:
