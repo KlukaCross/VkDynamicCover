@@ -12,6 +12,7 @@ from loguru import logger
 
 API_CODE_INVALID_PHOTO = 129
 API_CODE_INTERNAL_ERROR = 10
+API_CODE_RATE_LIMIT_REACHED = 29
 
 RETRY_SLEEP_SECONDS = 10
 RETRY_COUNT = 3
@@ -26,7 +27,7 @@ def api_retry(func):
                 return func(*args, **kwargs)
             except exceptions.ApiError as e:
                 last_error = e
-                if e.code not in [API_CODE_INVALID_PHOTO, API_CODE_INTERNAL_ERROR]:
+                if e.code not in [API_CODE_INVALID_PHOTO, API_CODE_INTERNAL_ERROR, API_CODE_RATE_LIMIT_REACHED]:
                     break
             except (requests.RequestException, exceptions.VkApiError) as e:
                 last_error = e

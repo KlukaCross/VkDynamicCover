@@ -17,7 +17,7 @@ from VkDynamicCover.types import MemberInfoTypes, ResourcePost, ResourceRepost, 
 
 
 RATING_UPDATE_SECONDS = 60
-REPOSTS_INFO_UPDATE_SECONDS = 120
+REPOSTS_INFO_UPDATE_SECONDS = 600
 
 
 class RatingHandler(Subscriber):
