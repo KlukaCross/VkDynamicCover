@@ -8,6 +8,9 @@ from .widget import WidgetControl, WidgetDrawer, WidgetInfo, WidgetDesigner
 from VkDynamicCover.utils import VkTools
 from VkDynamicCover.types import exceptions
 
+from loguru import logger
+
+
 SUPPORTED_INFO_STATS = ("members_count",)
 
 SUPPORTED_ACTIVITY_STATS = ("comments", "copies", "hidden", "likes", "subscribed", "unsubscribed")
@@ -36,8 +39,10 @@ class StatisticsDesigner(WidgetDesigner):
 
     @staticmethod
     def get_full_info(group_id: int, interval: str) -> typing.Dict[str, str]:
-        info_res = VkTools.get_group_info(group_id=group_id, fields=",".join(SUPPORTED_INFO_STATS))
-        stat_res = VkTools.get_group_statistics(group_id=group_id, interval=interval)[0]
+        info_res: dict = VkTools.get_group_info(group_id=group_id, fields=",".join(SUPPORTED_INFO_STATS))
+        stat_res: dict = VkTools.get_group_statistics(group_id=group_id, interval=interval)[0]
+        if len(info_res) == 0 or len(stat_res) == 0:
+            logger.warning(f"statistics not found for group {group_id}")
 
         interval_stats = {**stat_res.get("activity", {}),
                           **stat_res.get("visitors", {}),

@@ -15,7 +15,6 @@ from VkDynamicCover.types import UpdateRatingEvents, RatingEventRepost, RatingEv
 from VkDynamicCover.utils import VkTools, TimeTools
 from VkDynamicCover.types import MemberInfoTypes, ResourcePost, ResourceRepost, ResourceComment
 
-
 RATING_UPDATE_SECONDS = 60
 REPOSTS_INFO_UPDATE_SECONDS = 600
 
@@ -71,11 +70,17 @@ class RatingHandler(Subscriber):
             if object_type == "post":
                 resource_event = UpdateRatingEvents.ADD_POST_LIKE if event.type == "like_add" else \
                     UpdateRatingEvents.DEL_POST_LIKE
-                resource_time = VkTools.get_post_time(group_id=self._group_id, post_id=event.object["object_id"])
+                post_id = event.object["object_id"]
             elif object_type == "comment":
                 resource_event = UpdateRatingEvents.ADD_COMMENT_LIKE if event.type == "like_add" else \
                     UpdateRatingEvents.DEL_COMMENT_LIKE
-                resource_time = VkTools.get_post_time(group_id=self._group_id, post_id=event.object["post_id"])
+                post_id = event.object["post_id"]
+            else:
+                return
+            resource_time = VkTools.get_post_time(group_id=self._group_id, post_id=post_id)
+            if resource_time is None:
+                logger.warning(f"not found time for post {self._group_id}_{post_id}")
+                return
             event_object = RatingEventLike(unixtime=resource_time,
                                            object_id=event.object["object_id"],
                                            count=1 if resource_event in \
@@ -137,8 +142,10 @@ class RatingHandler(Subscriber):
         for members in self._ratings.values():
             for member in list(members.values()).copy():
                 for repost in member.reposts.copy():
-                    info = VkTools.get_repost(repost.user_id, repost.resource_id)
-                    if not info:
+                    info: dict = VkTools.get_repost(repost.user_id, repost.resource_id)
+                    if info is None:
+                        return
+                    if not len(info):
                         member.reposts.remove(repost)
                         continue
                     repost.likes = info['likes']['count'] if 'likes' in info else 0
@@ -184,6 +191,8 @@ class RatingHandler(Subscriber):
                                    event_object=RatingEventLike(object_id=p['id'], unixtime=p['date'], count=1))
 
             for i in comments:
+                if "deleted" in i:
+                    continue
                 comment_likes = VkTools.get_comment_likes(comment_id=i['id'], owner_id=i['owner_id'])
                 likes_count = comment_likes["count"]
                 for j in comment_likes['items']:
@@ -201,8 +210,6 @@ class RatingHandler(Subscriber):
                                    event_object=RatingEventRepost(repost_id=i['id'], post_id=p['id'], likes=likes_count,
                                                                   views=views_count, unixtime=p['date'],
                                                                   user_id=i["owner_id"]))
-
-        # self.update_donates()
 
         self.update_last_subs()
 
@@ -222,7 +229,6 @@ class RatingHandler(Subscriber):
             if not member:
                 members.add(user_id)
             members.add_resource(user_id, event, event_object)
-            logger.debug(f"Пользователю {user_id} добавлен ресурс для {event.name}")
         return True
 
 
@@ -257,8 +263,6 @@ class RatingMembers:
             member.add(MemberInfoTypes.POSTS, event_object)
         elif event == UpdateRatingEvents.ADD_REPOST:
             member.add(MemberInfoTypes.REPOSTS, event_object)
-        # elif event == UpdateRatingEvents.ADD_COMMENT_COMMENT:
-        #     member.add(MemberInfoTypes.COMMENT_COMMENTS, event_object)
         elif event == UpdateRatingEvents.ADD_POST_COMMENT:
             member.add(MemberInfoTypes.POST_COMMENTS, event_object)
             self._add_post_comment(event_object)

@@ -12,6 +12,8 @@ from pathlib import Path
 from VkDynamicCover.types import Interval, exceptions, Coordinates
 from VkDynamicCover.utils import VkTools
 
+from loguru import logger
+
 
 class PictureControl(WidgetControl):
     __TYPE__ = "Picture"
@@ -142,6 +144,9 @@ class RandomAlbumPictureDesigner(UrlPictureDesigner, RandomPictureDesigner):
         group_id, album_id = re.sub(self.ALBUM_REGEX, "", info.url).split('_')
         url = VkTools.get_random_image_from_album(group_id=int(group_id), album_id=int(album_id), user_id=info.user_id,
                                                   rand_func=self.random_function)
+        if url is None:
+            logger.warning(f"not found random image from album {group_id}_{album_id}")
+            return
         info.image = DrawTools.get_image_from_url(url)
 
     @staticmethod
