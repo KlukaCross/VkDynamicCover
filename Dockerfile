@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY setup.py requirements.txt README.md ./
 COPY ./VkDynamicCover ./VkDynamicCover
+COPY ./VkDynamicCover.sh ./VkDynamicCover.sh
 
 # Install system dependencies
 #
