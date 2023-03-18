@@ -105,3 +105,4 @@ if __name__ == "__main__":
         dynamic_cover.start()
     except (KeyboardInterrupt, SystemExit) as e:
         Scheduler.stop()
+    exit(1)

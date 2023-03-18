@@ -10,6 +10,8 @@ from VkDynamicCover.types import LIMITED_ACTION, exceptions, Coordinates
 import re
 import typing
 
+from loguru import logger
+
 DEFAULT_FONT_SIZE = 40
 DEFAULT_SPACING = 4
 DEFAULT_COLOR = "black"
@@ -192,7 +194,11 @@ class FormattingTextDesigner(TextDesigner):
         if not info.formatter:
             return
         for coors, txt in info.result_text.items():
-            info.result_text[coors] = info.formatter.get_format_text(txt)
+            try:
+                info.result_text[coors] = info.formatter.get_format_text(txt)
+            except KeyError as e:
+                logger.warning(f"{e} for text {txt}\nSet empty string")
+                info.result_text[coors] = ""
 
 
 class FormattingTextInfo(TextInfo):

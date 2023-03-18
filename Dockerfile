@@ -21,4 +21,4 @@ RUN apt-get update && \
             libatlas-base-dev && \
     pip3 install --extra-index-url=https://www.piwheels.org/simple --no-cache-dir .
 
-ENTRYPOINT ["python3", "-m", "VkDynamicCover"]
+ENTRYPOINT ["VkDynamicCover.sh"]

@@ -52,7 +52,7 @@ class DynamicCover:
         self.sleep_cycle = [sleep] if isinstance(sleep, int) else sleep
         self.cur_sleep = 0
 
-    @logger.catch(onerror=lambda _: exit(1))
+    @logger.catch(onerror=lambda _: Scheduler.stop())
     def start(self):
         while Scheduler.running:
             self.cover_drawing.update()
