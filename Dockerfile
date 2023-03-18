@@ -2,9 +2,8 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY setup.py requirements.txt README.md ./
+COPY setup.py requirements.txt README.md VkDynamicCover.sh ./
 COPY ./VkDynamicCover ./VkDynamicCover
-COPY ./VkDynamicCover.sh ./VkDynamicCover.sh
 
 # Install system dependencies
 #
