@@ -194,14 +194,13 @@ class RatingHandler(Subscriber):
                 if "deleted" in i:
                     continue
                 comment_likes = VkTools.get_comment_likes(comment_id=i['id'], owner_id=i['owner_id'])
-                likes_count = comment_likes["count"]
+                self._add_resource(user_id=i["from_id"], event=UpdateRatingEvents.ADD_POST_COMMENT,
+                                   event_object=RatingEventComment(comment_id=i['id'], object_id=p['id'],
+                                                                   likes=0,
+                                                                   unixtime=p['date']))
                 for j in comment_likes['items']:
                     self._add_resource(user_id=j, event=UpdateRatingEvents.ADD_COMMENT_LIKE,
                                        event_object=RatingEventLike(object_id=i['id'], unixtime=p['date'], count=1))
-                self._add_resource(user_id=i["from_id"], event=UpdateRatingEvents.ADD_POST_COMMENT,
-                                   event_object=RatingEventComment(comment_id=i['id'], object_id=p['id'],
-                                                                   likes=likes_count,
-                                                                   unixtime=p['date']))
 
             for i in reposts:
                 likes_count = i['likes']['count'] if 'likes' in i else 0
