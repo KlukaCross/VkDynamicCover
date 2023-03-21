@@ -123,25 +123,18 @@ class _VkTools(metaclass=MetaSingleton):
             return
         count_posts = req["count"]
         start_i = 0
-        # is maybe pinned post
-        if req["items"][0]["date"] >= from_date_unixtime:
+
+        if req["items"][0]["is_pinned"] == 1:
             start_i += 1
-            yield req["items"][0]
+            if req["items"][0]["date"] >= from_date_unixtime:
+                yield req["items"][0]
 
         for i in range(count_posts // 100 + 1):
             req = self._vk_meth.wall.get(owner_id=-group_id, count=100, offset=start_i + i * 100)
-            if req["items"][-1]["date"] < from_date_unixtime:
-                break
             for p in req["items"]:
+                if p["date"] < from_date_unixtime:
+                    return
                 yield p
-        else:
-            return
-
-        for post in req["items"]:
-            if post["date"] >= from_date_unixtime:
-                yield post
-            else:
-                return
 
     @api_retry
     def get_post_liker_ids(self, group_id: int, post_id: int, likes_count: int) -> list:

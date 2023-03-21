@@ -11,7 +11,7 @@ import typing
 from VkDynamicCover.types.interval import Interval
 from VkDynamicCover.types.rating_unit_info import RatingUnitInfo
 from VkDynamicCover.types import UpdateRatingEvents, RatingEventRepost, RatingEventComment, \
-    RatingEventLike, RatingEventPost
+    RatingEventLike, RatingEventPost, RatingEvent
 from VkDynamicCover.utils import VkTools, TimeTools
 from VkDynamicCover.types import MemberInfoTypes, ResourcePost, ResourceRepost, ResourceComment
 
@@ -218,7 +218,7 @@ class RatingHandler(Subscriber):
     def _is_reset_rating(interval: Interval) -> bool:
         return datetime.datetime.now().timestamp() > interval.to
 
-    def _add_resource(self, user_id: int, event: UpdateRatingEvents, event_object) -> bool:
+    def _add_resource(self, user_id: int, event: UpdateRatingEvents, event_object: RatingEvent) -> bool:
         if user_id < 0:
             return True
         for interval, members in self._ratings.items():
@@ -248,7 +248,7 @@ class RatingMembers:
     def get_all(self) -> typing.List["MemberInfo"]:
         return list(self._rating.values())
 
-    def add_resource(self, user_id: int, event: UpdateRatingEvents, event_object):
+    def add_resource(self, user_id: int, event: UpdateRatingEvents, event_object: RatingEvent):
         member = self.get_member(user_id)
         if event == UpdateRatingEvents.ADD_POST_LIKE:
             member.add(MemberInfoTypes.POST_LIKES, event_object)
@@ -269,7 +269,7 @@ class RatingMembers:
             member.remove(MemberInfoTypes.POST_LIKES, event_object)
             self._add_post_like(event_object)
         elif event == UpdateRatingEvents.DEL_COMMENT_LIKE:
-            member.remove(MemberInfoTypes.POST_COMMENTS, event_object)
+            member.remove(MemberInfoTypes.COMMENT_LIKES, event_object)
             self._add_comment_like(event_object)
 
     def __iter__(self):
@@ -287,9 +287,9 @@ class RatingMembers:
 
     def _add_comment_like(self, event_object: RatingEventLike):
         for m in self._rating.values():
-            pst = m.get_comment(event_object.object_id)
-            if pst:
-                pst.likes += event_object.count
+            cmt = m.get_comment(event_object.object_id)
+            if cmt:
+                cmt.likes += event_object.count
                 break
 
     def _add_post_comment(self, event_object: RatingEventComment):
@@ -307,7 +307,6 @@ class MemberInfo:
         self._post_likes: int = 0
         self._comment_likes: int = 0
         self._post_comments: typing.List[ResourceComment] = []
-        self._comment_comments: typing.List[ResourceComment] = []
         self._reposts: typing.List[ResourceRepost] = []
         self._released_posts: typing.List[ResourcePost] = []
         self._donates: int = 0
@@ -371,7 +370,7 @@ class MemberInfo:
         elif tp == MemberInfoTypes.DONATES:
             self._donates -= event_object.count
 
-    def remove(self, tp: MemberInfoTypes, event_object):
+    def remove(self, tp: MemberInfoTypes, event_object: RatingEvent):
         if tp == MemberInfoTypes.POST_LIKES:
             self._post_likes -= 1
         elif tp == MemberInfoTypes.COMMENT_LIKES:
