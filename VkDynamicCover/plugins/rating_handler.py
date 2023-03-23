@@ -53,13 +53,14 @@ class RatingHandler(Subscriber):
 
     def update(self, event):
         logger.debug(f"Новое событие {event}")
-        resource_event: UpdateRatingEvents = UpdateRatingEvents.NONE
-        resource_time = 0
         if event.type == VkBotEventType.WALL_REPLY_NEW:
             user_id = event.object["from_id"]
             resource_event = UpdateRatingEvents.ADD_POST_COMMENT
-            event_object = RatingEventComment(unixtime=VkTools.get_post_time(group_id=self._group_id,
-                                                                             post_id=event.object["post_id"]),
+            resource_time = VkTools.get_post_time(group_id=self._group_id, post_id=event.object["post_id"])
+            if resource_time is None:
+                logger.warning(f"not found time for post {self._group_id}_{event.object['post_id']}")
+                return
+            event_object = RatingEventComment(unixtime=resource_time,
                                               comment_id=event.object["id"],
                                               object_id=event.object["post_id"])
 
@@ -89,9 +90,13 @@ class RatingHandler(Subscriber):
             user_id = event.object["liker_id"]
 
         elif event.type == VkBotEventType.WALL_REPOST:
-            event_object = RatingEventRepost(unixtime=VkTools.get_post_time(group_id=self._group_id,
-                                                                            post_id=event.object["copy_history"][0][
-                                                                                "id"]),
+            post_id = event.object["copy_history"][0]["id"]
+            resource_time = VkTools.get_post_time(group_id=self._group_id,
+                                                  post_id=post_id)
+            if resource_time is None:
+                logger.warning(f"not found time for repost {self._group_id}_{post_id}")
+                return
+            event_object = RatingEventRepost(unixtime=resource_time,
                                              repost_id=event.object["id"],
                                              post_id=event.object["copy_history"][0]["id"],
                                              user_id=event.object["owner_id"])
