@@ -4,7 +4,7 @@ import typing
 from VkDynamicCover.types import MetaSingleton
 import requests
 from vk_api import vk_api, exceptions, upload
-from vk_api.bot_longpoll import VkBotLongPoll
+from vk_api.bot_longpoll import VkBotLongPoll, VkBotEvent
 import time
 
 from loguru import logger
@@ -203,6 +203,10 @@ class _VkTools(metaclass=MetaSingleton):
     @api_retry
     def get_longpoll(self, group_id: int) -> VkBotLongPoll:
         return VkBotLongPoll(self._vk_session, group_id=group_id)
+
+    @api_retry
+    def check_longpoll(self, longpoll: VkBotLongPoll) -> list[VkBotEvent]:
+        return longpoll.check()
 
 
 VkTools = _VkTools()

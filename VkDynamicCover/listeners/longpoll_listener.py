@@ -18,8 +18,8 @@ class LongpollListener(Listener, metaclass=MetaSingleton):
     def listen(self):
         longpoll = VkTools.get_longpoll(group_id=self.group_id)
         while Scheduler.running:
-            try:
-                for event in longpoll.check():
-                    self.update_all(event)
-            except requests.exceptions.ReadTimeout as e:
-                logger.warning(f"Время ожидания ответа истекло.\n{e}")
+            events = VkTools.check_longpoll(longpoll)
+            if not events:
+                continue
+            for event in events:
+                self.update_all(event)
