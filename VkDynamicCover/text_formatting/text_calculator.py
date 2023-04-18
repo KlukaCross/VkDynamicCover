@@ -1,4 +1,5 @@
 from .text_formatter import TextFormatter
+from loguru import logger
 import numexpr
 
 
@@ -9,4 +10,9 @@ class TextCalculator(TextFormatter):
 
     @staticmethod
     def text_calc(text) -> str:
-        return str(numexpr.evaluate(text))
+        try:
+            value = numexpr.evaluate(text)
+        except KeyError as e:
+            logger.error(e)
+            value = 0
+        return str(value)
